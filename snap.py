@@ -125,17 +125,20 @@ class Snap:
                                     cv2.THRESH_BINARY)[1]
             cv2.imshow('thresh', thresh)
             cnts, hierarchy = cv2.findContours(thresh.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+            area_list = []
+            rec_list = []
+
             for c in cnts:
                 (nX, nY, w, h) = cv2.boundingRect(c)
                 cnts_area = cv2.contourArea(c)
-                CONTOUR_AREA_EVAL = 0.4 * (x2 - x1) * (y2 - y1)
-                if cnts_area > CONTOUR_AREA_EVAL:
-                    print("startX: ",nX, " startY: ", nY, " w: ", w, " h: ", h)
-                    cv2.rectangle(crop_img, (nX, nY), (nX + w, nY + h), (0, 0xFF, 0), 4)
-                    cv2.imshow('crop', crop_img)
-                    return x1 + nX, y1 + nY, x2 + nX + w, y2 + nY + h
-            print("No contours found")
-            return 0, 0, 0 ,0
+                rec_list.append(nX, nY, w, h)
+                area_list.append(cnts_area)
+
+            nX, nY, w, h = rec_list[area_list.index(max(area_list))]
+            print("startX: ",nX, " startY: ", nY, " w: ", w, " h: ", h)
+            cv2.rectangle(crop_img, (nX, nY), (nX + w, nY + h), (0, 0xFF, 0), 4)
+            cv2.imshow('crop', crop_img)
+            return x1 + nX, y1 + nY, x2 + nX + w, y2 + nY + h
 
         # snapping with background subtraction implementation
         elif args[0] == 3 and len(args) == 7:
@@ -261,6 +264,7 @@ class Snap:
                 print('Session done')
                 break
             
+
 if __name__ == '__main__':
     ap = argparse.ArgumentParser()
     ap.add_argument("-v", "--video", required=False, default = "videos/ch08_20190805143300.mp4", help="name of video to be processed")
