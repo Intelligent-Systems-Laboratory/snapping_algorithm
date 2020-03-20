@@ -182,22 +182,36 @@ class Snap:
                                             cv2.THRESH_BINARY)[1]
                     cv2.imshow('thresh', thresh)
                     cnts, hierarchy = cv2.findContours(thresh, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+                    area_list = []
+                    rec_list = []
+
                     for c in cnts:
+                        bbox_list = []
                         (nX, nY, w, h) = cv2.boundingRect(c)
                         cnts_area = cv2.contourArea(c)
-                        CONTOUR_AREA_EVAL = 0.5 * (x2 - x1) * (y2 - y1)
-                        if cnts_area > CONTOUR_AREA_EVAL:
-                            print("startX: ",nX, " startY: ", nY, " w: ", w, " h: ", h)
-                            cv2.rectangle(frame_crop, (nX, nY), (nX + w, nY + h), (0, 0xFF, 0), 4)
-                            cv2.imshow('detection', frame_crop)
-                            nx1 = x1 + nX
-                            ny1 = y1 + nY
-                            nx2 = x1 + nX + w
-                            ny2 = y1 + nY + h
-                            return int(nx1), int(ny1), int(nx2), int(ny2)
-                    print("No contours found")
-                    break
-            return 0, 0, 0 ,0
+
+                        bbox_list.append(nX)
+                        bbox_list.append(nY)
+                        bbox_list.append(w)
+                        bbox_list.append(h)
+
+                        rec_list.append(bbox_list)
+                        area_list.append(cnts_area)
+
+                    if area_list == []:
+                        print("No contours found")
+                        return 0, 0, 0, 0
+
+                    else:    
+                        bbox_list = rec_list[area_list.index(max(area_list))]
+                        nX = bbox_list[0]
+                        nY = bbox_list[1]
+                        w = bbox_list[2]
+                        h = bbox_list[3]
+                        print("startX: ",nX, " startY: ", nY, " w: ", w, " h: ", h)
+                        cv2.rectangle(frame_crop, (nX, nY), (nX + w, nY + h), (0, 0xFF, 0), 4)
+                        cv2.imshow('crop', frame_crop)
+                        return x1 + nX, y1 + nY, x1 + nX + w, y1 + nY + h
 
         
         else:
