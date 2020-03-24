@@ -19,6 +19,7 @@ class Snap:
         self.SNAP_THRESHOLD = 1
         self.SNAP_OPTICAL_FLOW = 2
         self.SNAP_BACKGROUND_SUBTRACTION = 3
+        self.SNAP_GRABCUT = 4
     
 
     def show_flow_hsv(self, flow, show_style=1):
@@ -172,8 +173,8 @@ class Snap:
             fgbg = cv2.createBackgroundSubtractorKNN()
             fgbg.setShadowValue(0)
             
-            if frame_no > 50:
-                vid.set(cv2.CAP_PROP_POS_FRAMES, frame_no - 50)
+            if frame_no > 500:
+                vid.set(cv2.CAP_PROP_POS_FRAMES, frame_no - 500)
             else:
                 vid.set(cv2.CAP_PROP_POS_FRAMES, 0)
             
@@ -219,8 +220,76 @@ class Snap:
                         cv2.rectangle(frame_crop, (nX, nY), (nX + w, nY + h), (0, 0xFF, 0), 4)
                         cv2.imwrite(folder_name+'/frame_'+str(frame_no)+'_crop.jpg', frame_crop)
                         return x1 + nX, y1 + nY, x1 + nX + w, y1 + nY + h
-
         
+        #snapping with grabcut implementation
+        elif args[0] == 4 and len(args) == 8:
+            print("Using Grabcut Method")
+            if(isinstance(args[1], cv2.VideoCapture)):
+                vid = args[1]
+            else:
+                print("First argument should be a video")
+                return ValueError
+            if(isinstance(args[2], int)):
+                frame_no = args[2]
+            else:
+                print("Second argument should be a frame number")
+                return ValueError
+            if isinstance(args[3], (float, int)) and isinstance(args[4], (float, int)) or isinstance(args[5], (float, int)) or isinstance(args[6], (float, int)):
+                x1 = args[3]
+                y1 = args[4]
+                x2 = args[5]
+                y2 = args[6]
+            else:
+                print("Argument 3 to 6 should be int or float")
+                return ValueError
+            if(isinstance(args[7], str)):
+                folder_name = args[7]
+            else:
+                print("Folder name should be a string")
+                return ValueError
+
+            vid.set(cv2.CAP_PROP_POS_FRAMES, frame_no)
+            ret, img = vid.read()
+            mask = np.zeros(img.shape[:2],np.uint8)
+            bgdModel = np.zeros((1,65),np.float64)
+            fgdModel = np.zeros((1,65),np.float64)
+            rect = (int(x1), int(y1), int(x2-x1), int(y2-y1))
+
+            frame_crop = img[int(y1):int(y2), int(x1):int(x2)]
+            cv2.imwrite(folder_name+'/frame_'+str(frame_no)+'_frame_crop.jpg', frame_crop)
+
+            cv2.grabCut(img,mask,rect,bgdModel,fgdModel,10,cv2.GC_INIT_WITH_RECT)
+            orig = img.copy()   
+            display = orig.copy()
+            mask2 = np.where((mask==2)|(mask==0),0,1).astype('uint8')
+            img = img*mask2[:,:,np.newaxis]
+            img2  = np.where(img!=0,255,img).astype('uint8')
+            img2 = cv2.cvtColor(img2, cv2.COLOR_BGR2GRAY) 
+            img3 = cv2.threshold(img2,127,255,cv2.THRESH_BINARY)
+            print(np.shape(img3))
+
+            cv2.imwrite(folder_name+'/frame_'+str(frame_no)+'_mask.jpg', img)
+            cv2.imwrite(folder_name+'/frame_'+str(frame_no)+'_threshold.jpg', img2)
+
+            cnts, hierarchy = cv2.findContours(img2.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+            area_list = []
+            rec_list = []
+
+            for c in cnts:    
+                (nX, nY, w, h) = cv2.boundingRect(c)
+                cnts_area = cv2.contourArea(c)
+                rec_list.append(c)
+                area_list.append(cnts_area)
+
+            nX, nY, w, h = cv2.boundingRect(rec_list[area_list.index(max(area_list))])
+            print("startX: ",nX, " startY: ", nY, " w: ", w, " h: ", h)
+            cv2.rectangle(display, (nX, nY), (nX + w, nY + h), (0, 0xFF, 0), 4)
+            cv2.imwrite(folder_name+'/frame_'+str(frame_no)+'.jpg',display)
+            display = display[int(y1):int(y2), int(x1):int(x2)]
+            cv2.imwrite(folder_name+'/frame_'+str(frame_no)+'_crop.jpg', display)
+            return x1 + nX, y1 + nY, x1 + nX + w, y1 + nY + h
+
+
         else:
             print(self.help_message)
             return ValueError
@@ -231,7 +300,7 @@ class Snap:
         if event == cv2.EVENT_LBUTTONDOWN:
             print("x-coor: ", x, ", y-coor:", y)
 
-    def run(self,vid_name,FRAME_NO,bboxx1,bboxy1,bboxx2,bboxy2,folder_name):
+    def run(self,vid_name,FRAME_NO,bboxx1,bboxy1,bboxx2,bboxy2,folder_name,snap_type):
         # the video could only use up to 400 frames for high accuracy
         vid = cv2.VideoCapture(vid_name)
         
@@ -244,14 +313,15 @@ class Snap:
         imgvis = imutils.resize(img, width=1028)
         ratioW = W/1028
 
-        x1, y1, x2, y2 = snap.snap_algorithm(snap.SNAP_BACKGROUND_SUBTRACTION, vid, FRAME_NO, bboxx1*ratioW, bboxy1*ratioW, bboxx2*ratioW, bboxy2*ratioW, folder_name)
-        x1 = int(x1 / ratioW)
-        x2 = int(x2 / ratioW)
-        y1 = int(y1 / ratioW)
-        y2 = int(y2 / ratioW)
+        x1, y1, x2, y2 = snap.snap_algorithm(snap_type, vid, FRAME_NO, bboxx1*ratioW, bboxy1*ratioW, bboxx2*ratioW, bboxy2*ratioW, folder_name)
 
-        cv2.rectangle(imgvis, (x1, y1), (x2, y2), (0, 0xFF, 0), 4)
-        cv2.imwrite(folder_name+'/frame_'+str(FRAME_NO)+'.jpg',imgvis)
+        if snap_type == snap.SNAP_BACKGROUND_SUBTRACTION:
+            x1 = int(x1 / ratioW)
+            x2 = int(x2 / ratioW)
+            y1 = int(y1 / ratioW)
+            y2 = int(y2 / ratioW)
+            cv2.rectangle(imgvis, (x1, y1), (x2, y2), (0, 0xFF, 0), 4)
+            cv2.imwrite(folder_name+'/frame_'+str(FRAME_NO)+'.jpg',imgvis)
             
 
 if __name__ == '__main__':
@@ -259,6 +329,7 @@ if __name__ == '__main__':
     ap.add_argument("-r", "--run_from_file", required=False, default=None, help="process coordinates from file")
     args = vars(ap.parse_args())
     snap = Snap()
+    snap_type = snap.SNAP_GRABCUT
     i = 1
 
     if args["run_from_file"] == None:
@@ -298,8 +369,7 @@ if __name__ == '__main__':
                     print(int(x2))
                     print(int(y2))
                 if i%8 == 0:
-
-                    snap.run(video,frame_no,x1,y1,x2,y2,folder_name)
+                    snap.run(video,frame_no,x1,y1,x2,y2,folder_name,snap_type)
                     print("\n\n")
                 i = i+1
                 
