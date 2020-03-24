@@ -191,6 +191,14 @@ y2: 559
 
 
 vid name: videos/ch10_08-13_15-00-2.mp4
+frame no: 1400
+x1: 389
+y1: 143
+x2: 513
+y2: 268
+
+
+vid name: videos/ch10_08-13_15-00-2.mp4
 frame no: 850
 x1: 440
 y1: 128

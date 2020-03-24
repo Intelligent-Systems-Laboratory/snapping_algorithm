@@ -1,0 +1,424 @@
+vid name: videos/ch08_20190805143300.mp4
+frame no: 50
+x1: 206
+y1: 282
+x2: 439
+y2: 520
+
+
+vid name: videos/ch08_20190805143300.mp4
+frame no: 15025
+x1: 176
+y1: 263
+x2: 420
+y2: 526
+
+
+vid name: videos/ch08_20190805143300.mp4
+frame no: 450
+x1: 542
+y1: 252
+x2: 813
+y2: 540
+
+
+vid name: videos/ch08_20190805143300.mp4
+frame no: 1425
+x1: 600
+y1: 239
+x2: 809
+y2: 455
+
+
+vid name: videos/ch08_20190805143300.mp4
+frame no: 335
+x1: 674
+y1: 259
+x2: 885
+y2: 428
+
+
+vid name: videos/ch08_20190805143300.mp4
+frame no: 585
+x1: 708
+y1: 256
+x2: 875
+y2: 433
+
+
+vid name: videos/ch08_20190805143300.mp4
+frame no: 240
+x1: 150
+y1: 222
+x2: 365
+y2: 395
+
+
+vid name: videos/ch08_20190805143300.mp4
+frame no: 1400
+x1: 186
+y1: 218
+x2: 400
+y2: 451
+
+
+vid name: videos/ch05_08-13_17-45-6.mp4
+frame no: 50
+x1: 662
+y1: 141
+x2: 1009
+y2: 431
+
+
+vid name: videos/ch05_08-13_17-45-6.mp4
+frame no: 1475
+x1: 448
+y1: 172
+x2: 761
+y2: 444
+
+
+vid name: videos/ch05_08-13_17-45-6.mp4
+frame no: 825
+x1: 445
+y1: 171
+x2: 762
+y2: 464
+
+
+vid name: videos/ch05_08-13_17-45-6.mp4
+frame no: 1300
+x1: 335
+y1: 95
+x2: 541
+y2: 302
+
+
+vid name: videos/ch05_08-13_17-45-6.mp4
+frame no: 375
+x1: 144
+y1: 109
+x2: 308
+y2: 274
+
+
+vid name: videos/ch05_08-13_17-45-6.mp4
+frame no: 425
+x1: 465
+y1: 113
+x2: 665
+y2: 295
+
+
+vid name: videos/ch05_08-13_17-45-6.mp4
+frame no: 600
+x1: 180
+y1: 263
+x2: 441
+y2: 551
+
+
+vid name: videos/ch05_08-13_17-45-6.mp4
+frame no: 75
+x1: 497
+y1: 128
+x2: 709
+y2: 296
+
+
+vid name: videos/ch10_08-08_17-15-1.mp4
+frame no: 50
+x1: 330
+y1: 87
+x2: 510
+y2: 253
+
+
+vid name: videos/ch10_08-08_17-15-1.mp4
+frame no: 1450
+x1: 333
+y1: 89
+x2: 509
+y2: 250
+
+
+vid name: videos/ch10_08-08_17-15-1.mp4
+frame no: 100
+x1: 64
+y1: 119
+x2: 237
+y2: 288
+
+
+vid name: videos/ch10_08-08_17-15-1.mp4
+frame no: 250
+x1: 190
+y1: 95
+x2: 362
+y2: 258
+
+
+vid name: videos/ch10_08-08_17-15-1.mp4
+frame no: 325
+x1: 56
+y1: 97
+x2: 208
+y2: 243
+
+
+vid name: videos/ch10_08-08_17-15-1.mp4
+frame no: 750
+x1: 67
+y1: 93
+x2: 234
+y2: 256
+
+
+vid name: videos/ch10_08-08_17-15-1.mp4
+frame no: 200
+x1: 335
+y1: 86
+x2: 508
+y2: 250
+
+
+vid name: videos/ch10_08-13_15-00-2.mp4
+frame no: 50
+x1: 288
+y1: 181
+x2: 677
+y2: 589
+
+
+vid name: videos/ch10_08-13_15-00-2.mp4
+frame no: 1400
+x1: 359
+y1: 113
+x2: 543
+y2: 298
+
+
+vid name: videos/ch10_08-13_15-00-2.mp4
+frame no: 850
+x1: 410
+y1: 98
+x2: 584
+y2: 273
+
+
+vid name: videos/ch10_08-13_15-00-2.mp4
+frame no: 1000
+x1: 269
+y1: 92
+x2: 427
+y2: 248
+
+
+vid name: videos/ch10_08-13_15-00-2.mp4
+frame no: 110
+x1: 385
+y1: 116
+x2: 537
+y2: 264
+
+
+vid name: videos/ch10_08-13_15-00-2.mp4
+frame no: 200
+x1: 387
+y1: 99
+x2: 562
+y2: 261
+
+
+vid name: videos/ch10_08-13_15-00-2.mp4
+frame no: 750
+x1: 402
+y1: 88
+x2: 559
+y2: 249
+
+
+vid name: videos/ch10_08-13_15-00-2.mp4
+frame no: 75
+x1: 422
+y1: 115
+x2: 616
+y2: 300
+
+
+vid name: videos/ch08_20190804180000.mp4
+frame no: 50
+x1: 424
+y1: 110
+x2: 717
+y2: 376
+
+
+vid name: videos/ch08_20190804180000.mp4
+frame no: 7490
+x1: 452
+y1: 128
+x2: 712
+y2: 360
+
+
+vid name: videos/ch08_20190804180000.mp4
+frame no: 4050
+x1: 96
+y1: 203
+x2: 431
+y2: 460
+
+
+vid name: videos/ch08_20190804180000.mp4
+frame no: 4300
+x1: 652
+y1: 201
+x2: 921
+y2: 512
+
+
+vid name: videos/ch08_20190804180000.mp4
+frame no: 1010
+x1: 615
+y1: 93
+x2: 777
+y2: 249
+
+
+vid name: videos/ch08_20190804180000.mp4
+frame no: 4980
+x1: 796
+y1: 125
+x2: 964
+y2: 287
+
+
+vid name: videos/ch08_20190804180000.mp4
+frame no: 1640
+x1: 491
+y1: 135
+x2: 716
+y2: 323
+
+
+vid name: videos/ch08_20190804180000.mp4
+frame no: 4200
+x1: 101
+y1: 202
+x2: 432
+y2: 462
+
+
+vid name: videos/ch08_20190804152637.mp4
+frame no: 50
+x1: 430
+y1: 231
+x2: 792
+y2: 558
+
+
+vid name: videos/ch08_20190804152637.mp4
+frame no: 5150
+x1: 458
+y1: 147
+x2: 697
+y2: 344
+
+
+vid name: videos/ch08_20190804152637.mp4
+frame no: 200
+x1: 465
+y1: 90
+x2: 746
+y2: 347
+
+
+vid name: videos/ch08_20190804152637.mp4
+frame no: 1450
+x1: 428
+y1: 137
+x2: 705
+y2: 383
+
+
+vid name: videos/ch08_20190804152637.mp4
+frame no: 3820
+x1: 556
+y1: 118
+x2: 755
+y2: 289
+
+
+vid name: videos/ch08_20190804152637.mp4
+frame no: 2130
+x1: 379
+y1: 89
+x2: 628
+y2: 299
+
+
+vid name: videos/ch08_20190804152637.mp4
+frame no: 1890
+x1: 147
+y1: 93
+x2: 446
+y2: 325
+
+
+vid name: videos/ch08_20190804085322.mp4
+frame no: 50
+x1: 427
+y1: 168
+x2: 701
+y2: 396
+
+
+vid name: videos/ch08_20190804085322.mp4
+frame no: 2800
+x1: 678
+y1: 167
+x2: 910
+y2: 384
+
+
+vid name: videos/ch08_20190804085322.mp4
+frame no: 4250
+x1: 473
+y1: 151
+x2: 712
+y2: 357
+
+
+vid name: videos/ch08_20190804085322.mp4
+frame no: 1575
+x1: 405
+y1: 92
+x2: 656
+y2: 290
+
+
+vid name: videos/ch08_20190804085322.mp4
+frame no: 6800
+x1: 160
+y1: 131
+x2: 388
+y2: 321
+
+
+vid name: videos/ch08_20190804085322.mp4
+frame no: 7175
+x1: 561
+y1: 131
+x2: 791
+y2: 391
+
+
+vid name: videos/ch08_20190804085322.mp4
+frame no: 1700
+x1: 158
+y1: 141
+x2: 510
+y2: 402
+
+
