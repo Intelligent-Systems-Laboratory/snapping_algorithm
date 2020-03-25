@@ -6,18 +6,11 @@ import argparse
 # import this class to use the functions
 
 class Snap:
-    def __init__ (self):
-        self.help_message = \
-            '''
-        Usage of this algorithm:
-        snap(img, x1, y1, x2, y2) -- purely vision-based
-        snap(prev, img, x1, y1, x2, y2) -- optical flow implementation
 
-        '''
-        self.SNAP_THRESHOLD = 1
-        self.SNAP_OPTICAL_FLOW = 2
-        self.SNAP_BACKGROUND_SUBTRACTION = 3
-    
+    SNAP_THRESHOLD = 1
+    SNAP_OPTICAL_FLOW = 2
+    SNAP_BACKGROUND_SUBTRACTION = 3
+    SNAP_GRABCUT = 4
 
     def show_flow_hsv(self, flow, show_style=1):
         mag, ang = cv2.cartToPolar(flow[..., 0], flow[..., 1])
@@ -209,96 +202,66 @@ class Snap:
                         w = bbox_list[2]
                         h = bbox_list[3]
                         print("startX: ",nX, " startY: ", nY, " w: ", w, " h: ", h)
-                        cv2.rectangle(frame_crop, (nX, nY), (nX + w, nY + h), (0, 0xFF, 0), 4)
+                        px1 = int(x1 + nX)
+                        py1 = int(y1 + nY)
+                        px2 = int(x1 + nX + w)
+                        py2 = int(y1 + nY + h)
+                        cv2.rectangle(frame, (px1, py1), (px2, py2), (0, 0xFF, 0), 4)
                         cv2.imshow('crop', frame_crop)
-                        return x1 + nX, y1 + nY, x1 + nX + w, y1 + nY + h
+                        return frame
 
-        
+        # Grabcut Implementation
+        elif args[0] == 4 and len(args) == 6:
+            print("Using Grabcut Algorithm")
+            if(isinstance(args[1], np.ndarray)):
+                img = args[1]
+            else:
+                print("First argument should be an image")
+                return ValueError
+            if isinstance(args[2], (float, int)) and isinstance(args[3], (float, int)) or isinstance(args[4], (float, int)) or isinstance(args[5], (float, int)):
+                x1 = args[2]
+                y1 = args[3]
+                x2 = args[4]
+                y2 = args[5]
+            else:
+                print("Argument 2 to 5 should be int or float")
+                return ValueError
+
+            mask = np.zeros(img.shape[:2],np.uint8)
+            bgdModel = np.zeros((1,65),np.float64)
+            fgdModel = np.zeros((1,65),np.float64)
+
+            rect = ((x1, y1), (x2, y2))
+            print(type(rect))
+
+            cv2.grabCut(img,mask,rect,bgdModel,fgdModel,10,cv2.GC_INIT_WITH_RECT) 
+            display = img.copy()
+            mask2 = np.where((mask==2)|(mask==0),0,1).astype('uint8')
+            img = img*mask2[:,:,np.newaxis]
+            img2 = np.where(img!=0,255,img).astype('uint8')
+            img2 = cv2.cvtColor(img2, cv2.COLOR_BGR2GRAY) 
+            img3 = cv2.threshold(img2,127,255,cv2.THRESH_BINARY)
+            cnts, hierarchy = cv2.findContours(img2.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+            area_list = []
+            rec_list = []
+
+            for c in cnts:    
+                (nX, nY, w, h) = cv2.boundingRect(c)
+                cnts_area = cv2.contourArea(c)
+                rec_list.append(c)
+                area_list.append(cnts_area)
+
+            nX, nY, w, h = cv2.boundingRect(rec_list[area_list.index(max(area_list))])
+            print("startX: ",nX, " startY: ", nY, " w: ", w, " h: ", h)
+            cv2.rectangle(display, (nX, nY), (nX + w, nY + h), (0, 0xFF, 0), 4)
+            return display
+
+
         else:
-            print(self.help_message)
+            print("Error in the arguments")
             return ValueError
-
 
 
     def click(self, event, x, y, flags, param):
         if event == cv2.EVENT_LBUTTONDOWN:
             print("x-coor: ", x, ", y-coor:", y)
-
-    def run(self,vid_name,frame_num):
-        # the video could only use up to 400 frames for high accuracy
-        vid = cv2.VideoCapture(vid_name)
-        
-        # THE PARAMETERS TO CHANGE
-        # Coordinates of the resized image, not the full size
-        FRAME_NO = int(frame_num)
-        bboxx1 = 232
-        bboxy1 = 313
-        bboxx2 = 412
-        bboxy2 = 484
-
-        vid.set(1, FRAME_NO)
-        ret, img = vid.read()
-        (H,W) = img.shape[:2]
-        
-        imgvis = imutils.resize(img, width=1028)
-
-        ratioW = W/1028
-        cv2.namedWindow('Image')
-        cv2.setMouseCallback('Image', snap.click)
-        print('Press \'a\' to select an area')
-        print('Press \'s\' to use the predefined area')
-
-        #cv2.imshow('Image', imgvis)
-        key = cv2.waitKey(0)
-        if key == ord('a'):
-            print("Select the Area that you want to apply the snapping function")
-            r = cv2.selectROI('Select Area',imgvis)
-            cv2.destroyWindow('Select Area')
-            bboxx1 = r[0]
-            bboxy1 = r[1]
-            bboxx2 = (r[0]+r[2])
-            bboxy2 = (r[1]+r[3])
-            #print(r)
-        else:
-            print('predefined area selected')
-
-        x1, y1, x2, y2 = snap.snap_algorithm(snap.SNAP_BACKGROUND_SUBTRACTION, vid, FRAME_NO, bboxx1*ratioW, bboxy1*ratioW, bboxx2*ratioW, bboxy2*ratioW)
-        x1 = int(x1 / ratioW)
-        x2 = int(x2 / ratioW)
-        y1 = int(y1 / ratioW)
-        y2 = int(y2 / ratioW)
-        #print('x1: ', x1, 'y1: ', y1, 'x2: ', x2, 'y2: ', y2)
-
-        cv2.rectangle(imgvis, (x1, y1), (x2, y2), (0, 0xFF, 0), 4)
-        print('Press \'q\' if done')
-        while True:
-            cv2.imshow('Image', imgvis)
-            key = cv2.waitKey(1) & 0xFF
-            if key == ord('q'):
-                print('Session done')
-                break
-            
-
-if __name__ == '__main__':
-    ap = argparse.ArgumentParser()
-    ap.add_argument("-v", "--video", required=False, default = "videos/ch08_20190805143300.mp4", help="name of video to be processed")
-    ap.add_argument("-f", "--frame_num", required=False, default = 50, help="video frame to be processed")
-    args = vars(ap.parse_args())
-
-    snap = Snap()
-    
-
-    while True:
-        snap.run(args["video"],args["frame_num"])
-        print("Press \'R\' to Restart")
-        print("Press \'Q\' to quit")
-        key = cv2.waitKey(0)
-        cv2.destroyAllWindows()
-        
-
-        if key == ord('q'):
-            break
-        elif key == ord('r'):
-            print("RESTARTING . . . ")
-                
- 
