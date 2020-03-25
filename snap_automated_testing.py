@@ -20,10 +20,13 @@ def run(vid_name,FRAME_NO,bboxx1,bboxy1,bboxx2,bboxy2,folder_name,snap_type):
     imgvis = imutils.resize(img, width=1028)
     ratioW = W/1028
 
-    imgvis = snap.snap_algorithm(snap_type, vid, FRAME_NO, bboxx1*ratioW, bboxy1*ratioW, bboxx2*ratioW, bboxy2*ratioW, folder_name)
+    thresh, frame_crop, fgmask_crop, imgvis = snap.snap_algorithm(snap_type, vid, FRAME_NO, bboxx1*ratioW, bboxy1*ratioW, bboxx2*ratioW, bboxy2*ratioW)
 
     imgvis = imutils.resize(imgvis, width = 1028)
     if snap_type == snap.SNAP_BACKGROUND_SUBTRACTION:
+        cv2.imwrite(folder_name+'/frame_'+str(frame_no)+'_thresh.jpg', thresh)
+        cv2.imwrite(folder_name+'/frame_'+str(frame_no)+'_crop.jpg', frame_crop)
+        cv2.imwrite(folder_name+'/frame_'+str(frame_no)+'_fgmask_crop.jpg', fgmask_crop)
         cv2.imwrite(folder_name+'/frame_'+str(FRAME_NO)+'.jpg',imgvis)
 
 ap = argparse.ArgumentParser()
@@ -32,8 +35,7 @@ ap.add_argument("-v", "--video", required=False, default = "videos/ch08_20190805
 ap.add_argument("-f", "--frame_num", required=False, default = 50, help="video frame to be processed")
 args = vars(ap.parse_args())
 
-
-snap_type = snap.SNAP_GRABCUT
+snap_type = snap.SNAP_BACKGROUND_SUBTRACTION
 i = 1
 
 if args["run_from_file"] == None:
