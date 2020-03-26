@@ -6,7 +6,7 @@ import os.path
 
 from os import path
 
-from snap import Snap as snap
+from snap import Snap
 
 def run(vid_name,FRAME_NO,bboxx1,bboxy1,bboxx2,bboxy2,folder_name,snap_type):
     # the video could only use up to 400 frames for high accuracy
@@ -19,8 +19,7 @@ def run(vid_name,FRAME_NO,bboxx1,bboxy1,bboxx2,bboxy2,folder_name,snap_type):
     (H,W) = img.shape[:2]
     imgvis = imutils.resize(img, width=1028)
     ratioW = W/1028
-
-    thresh, frame_crop, fgmask_crop, imgvis = snap.snap_algorithm(snap_type, vid, FRAME_NO, bboxx1*ratioW, bboxy1*ratioW, bboxx2*ratioW, bboxy2*ratioW)
+    thresh, frame_crop, fgmask_crop, imgvis = snap.snap_algorithm(snap.SNAP_BACKGROUND_SUBTRACTION, vid, FRAME_NO, bboxx1*ratioW, bboxy1*ratioW, bboxx2*ratioW, bboxy2*ratioW)
 
     imgvis = imutils.resize(imgvis, width = 1028)
     if snap_type == snap.SNAP_BACKGROUND_SUBTRACTION:
@@ -31,10 +30,9 @@ def run(vid_name,FRAME_NO,bboxx1,bboxy1,bboxx2,bboxy2,folder_name,snap_type):
 
 ap = argparse.ArgumentParser()
 ap.add_argument("-r", "--run_from_file", required=False, default=None, help="process coordinates from file")
-ap.add_argument("-v", "--video", required=False, default = "videos/ch08_20190805143300.mp4", help="name of video to be processed")
-ap.add_argument("-f", "--frame_num", required=False, default = 50, help="video frame to be processed")
 args = vars(ap.parse_args())
 
+snap = Snap()
 snap_type = snap.SNAP_BACKGROUND_SUBTRACTION
 i = 1
 

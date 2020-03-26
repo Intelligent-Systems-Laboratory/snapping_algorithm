@@ -6,11 +6,11 @@ import argparse
 # import this class to use the functions
 
 class Snap:
-
-    SNAP_THRESHOLD = 1
-    SNAP_OPTICAL_FLOW = 2
-    SNAP_BACKGROUND_SUBTRACTION = 3
-    SNAP_GRABCUT = 4
+    def __init__ (self) :
+        self.SNAP_THRESHOLD = 1
+        self.SNAP_OPTICAL_FLOW = 2
+        self.SNAP_BACKGROUND_SUBTRACTION = 3
+        self.SNAP_GRABCUT = 4
 
     def show_flow_hsv(self, flow, show_style=1):
         mag, ang = cv2.cartToPolar(flow[..., 0], flow[..., 1])
@@ -35,6 +35,7 @@ class Snap:
     # snap_algorithm(flag, prev, img, x1, y1, x2, y2) -- optical flow implementation
 
     def snap_algorithm(self, *args):
+        print(len(args))
         # vision-based implementation of snapping
         if args[0] == 1 and len(args) == 6:
             if(isinstance(args[1], np.ndarray)):
@@ -168,12 +169,9 @@ class Snap:
                 fgmask = fgbg.apply(frame)
                 if int(vid.get(cv2.CAP_PROP_POS_FRAMES)) > frame_no:
                     frame_crop = frame[int(y1):int(y2), int(x1):int(x2)]
-                    cv2.imshow('frame_crop', frame_crop)
                     fgmask_crop = fgmask[int(y1):int(y2), int(x1):int(x2)]
-                    cv2.imshow('fgmask', fgmask_crop)
                     thresh = cv2.threshold(fgmask_crop, 20, 0xFF,
                                             cv2.THRESH_BINARY)[1]
-                    cv2.imshow('thresh', thresh)
                     cnts, hierarchy = cv2.findContours(thresh, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
                     area_list = []
                     rec_list = []
@@ -207,7 +205,6 @@ class Snap:
                         px2 = int(x1 + nX + w)
                         py2 = int(y1 + nY + h)
                         cv2.rectangle(frame, (px1, py1), (px2, py2), (0, 0xFF, 0), 4)
-                        cv2.imshow('crop', frame_crop)
                         return thresh, fgmask_crop, frame_crop, frame
 
         # Grabcut Implementation
