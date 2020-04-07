@@ -52,7 +52,7 @@ snap_type = snap.SNAP_BACKGROUND_SUBTRACTION_CNT_NO_SHADOW
 i = 1
 
 if args["run_from_file"] == None:
-    args["run_from_file"] = ["small_boxes.txt"]
+    args["run_from_file"] = ["small_boxes.txt", "medium_boxes.txt", "large_boxes.txt"]
 else:
     args["run_from_file"] = [args["run_from_file"]]
     
