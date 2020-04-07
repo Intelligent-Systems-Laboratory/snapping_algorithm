@@ -9,10 +9,16 @@ from os import path
 
 from snap import Snap
 
+
 def time():
     dateTimeObj = datetime.now()
+    return dateTimeObj
+
+
+def time_print(dateTimeObj):
     print(dateTimeObj.year, '/', dateTimeObj.month, '/', dateTimeObj.day)
     print(dateTimeObj.hour, ':', dateTimeObj.minute, ':', dateTimeObj.second, '.', dateTimeObj.microsecond)
+
 
 def run(vid_name,FRAME_NO,bboxx1,bboxy1,bboxx2,bboxy2,folder_name,snap_type):
     # the video could only use up to 400 frames for high accuracy
@@ -42,17 +48,18 @@ def run(vid_name,FRAME_NO,bboxx1,bboxy1,bboxx2,bboxy2,folder_name,snap_type):
         cv2.imwrite(folder_name+'/frame_'+str(frame_no)+'_crop_grabcut.jpg', grabcut_crop)
         cv2.imwrite(folder_name+'/frame_'+str(FRAME_NO)+'_grabcut.jpg',display)
 
-time()
+
+start_time = time()
 ap = argparse.ArgumentParser()
 ap.add_argument("-r", "--run_from_file", required=False, default=None, help="process coordinates from file")
 args = vars(ap.parse_args())
 
 snap = Snap()
-snap_type = snap.SNAP_BACKGROUND_SUBTRACTION_CNT_NO_SHADOW
+snap_type = snap.SNAP_BACKGROUND_SUBTRACTION_MOG2
 i = 1
 
 if args["run_from_file"] == None:
-    args["run_from_file"] = ["small_boxes.txt", "medium_boxes.txt", "large_boxes.txt"]
+    args["run_from_file"] = ["small_boxes.txt"]
 else:
     args["run_from_file"] = [args["run_from_file"]]
     
@@ -92,4 +99,7 @@ for filename in args["run_from_file"]:
                 print("\n\n")
             i = i+1
 
-time()
+end_time = time()
+
+time_print(start_time)
+time_print(end_time)

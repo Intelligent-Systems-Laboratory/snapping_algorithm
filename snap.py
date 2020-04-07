@@ -49,14 +49,17 @@ class Snap:
                 fgmask = fgbg.apply(gray)
             else:
                 break
+
+            if int(vid.get(cv2.CAP_PROP_POS_FRAMES)) % 500 == 0:
+                print("Adding to bgimage list")
+                bgimage.append(fgbg.getBackgroundImage())
+                
             count = 0
             for count in range(1,frame_skip):
                 if count == frame_skip:
                     break
                 else:
                     ret, frame = vid.read()
-            if vid.get(cv2.CAP_PROP_POS_FRAMES) % 500 == 0:
-                bgimage.append(fgbg.getBackgroundImage())
 
         print("BG Image Done")
         return bgimage
@@ -106,7 +109,7 @@ class Snap:
                     cv2.imshow('crop', crop_img)    
                     return x1 + nx1, y1 + ny1, x2 + nx1 + w, y2 + ny1 + h
             print("No contours found")
-            return 0, 0, 0 ,0
+            return 0, 0, 0, 0
 
 
         # optical flow implementation of snapping
@@ -325,8 +328,7 @@ class Snap:
             while True:
                 ret, frame = vid.read()
                 if ret:
-                    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-                    fgmask = fgbg.apply(gray)
+                    fgmask = fgbg.apply(frame)
                 else:
                     break
                 count = 0
@@ -491,13 +493,14 @@ class Snap:
             fgbg.setShadowValue(0)
 
             bgimage = self.get_bgimage(vid)
-
+            print("BGimage count: ", len(bgimage))
             for i in range (0, len(bgimage)):
                 fgmask = fgbg.apply(bgimage[i], learningRate = 0.5)
 
             vid.set(cv2.CAP_PROP_POS_FRAMES, frame_no-1)
             ret, frame = vid.read()
             fgmask = fgbg.apply(frame, learningRate = 0)
+
             frame_crop = frame[int(y1):int(y2), int(x1):int(x2)]
             fgmask_crop = fgmask[int(y1):int(y2), int(x1):int(x2)]
             thresh = cv2.threshold(fgmask_crop, 20, 0xFF,
