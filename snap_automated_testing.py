@@ -55,7 +55,7 @@ ap.add_argument("-r", "--run_from_file", required=False, default=None, help="pro
 args = vars(ap.parse_args())
 
 snap = Snap()
-snap_type = snap.SNAP_BACKGROUND_SUBTRACTION_MOG2
+snap_type = snap.SNAP_BACKGROUND_SUBTRACTION_CNT_NO_SHADOW
 i = 1
 
 if args["run_from_file"] == None:

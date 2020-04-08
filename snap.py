@@ -35,24 +35,22 @@ class Snap:
         return bgr
 
 
-    def get_bgimage(self, vid, frame_skip = 10, bgsubtype = "CNT"):
+    def get_bgimage(self, vid, frame_skip = 10, return_type = "array"):
         if isinstance(vid, cv2.VideoCapture) == False:
             print("Video must be a cv2.VideoCapture")
             return None
         fgbg = cv2.bgsegm.createBackgroundSubtractorCNT()
-        vid.set(cv2.CAP_PROP_POS_FRAMES, 9)
-        bgimage = []
+        vid.set(cv2.CAP_PROP_POS_FRAMES, frame_skip - 1)
+        bgimage_list = []
         while True:
             ret, frame = vid.read()
             if ret:
-                gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-                fgmask = fgbg.apply(gray)
+                fgmask = fgbg.apply(frame)
             else:
                 break
 
-            if int(vid.get(cv2.CAP_PROP_POS_FRAMES)) % 500 == 0:
-                print("Adding to bgimage list")
-                bgimage.append(fgbg.getBackgroundImage())
+            if int(vid.get(cv2.CAP_PROP_POS_FRAMES)) % (frame_skip * 50) == 0:
+                bgimage_list.append(fgbg.getBackgroundImage())
                 
             count = 0
             for count in range(1,frame_skip):
@@ -60,9 +58,13 @@ class Snap:
                     break
                 else:
                     ret, frame = vid.read()
-
-        print("BG Image Done")
-        return bgimage
+        if return_type == "array":
+            return bgimage_list
+        elif return_type == "image":
+            return bgimage_list[len(bgimage_list)-1]
+        else:
+            print("Valid return_type: array, image")
+            return None
 
     # snapping_algorithm can be called by the following:
     # snap_algorithm(flag, img, x1, y1, x2, y2) -- thresholding
@@ -332,7 +334,7 @@ class Snap:
                 else:
                     break
                 count = 0
-                for count in range(1,frame_skip):
+                for count in range(1, frame_skip):
                     if count == frame_skip:
                         break
                     else:
@@ -467,7 +469,7 @@ class Snap:
                     return background, thresh, fgmask_crop, frame_crop, frame
 
 
-        # snapping with CNT background subtraction w/ shadow Removal
+        # snapping with CNT background subtraction w/ Shadow Removal
         elif args[0] == 7 and len(args) == 7:
             print("Using CNT Background Subtraction Method w/ Shadow Removal")
             if(isinstance(args[1], cv2.VideoCapture)):
@@ -489,18 +491,24 @@ class Snap:
                 print("Argument 3 to 6 should be int or float")
                 return ValueError
             
-            fgbg = cv2.createBackgroundSubtractorMOG2()
+            fgbg = cv2.createBackgroundSubtractorKNN()
             fgbg.setShadowValue(0)
 
-            bgimage = self.get_bgimage(vid)
-            print("BGimage count: ", len(bgimage))
-            for i in range (0, len(bgimage)):
-                fgmask = fgbg.apply(bgimage[i], learningRate = 0.5)
-
-            vid.set(cv2.CAP_PROP_POS_FRAMES, frame_no-1)
+            return_type = "image"
+            bgimage = self.get_bgimage(vid, return_type = return_type)
+            vid.set(cv2.CAP_PROP_POS_FRAMES, frame_no - 1)
             ret, frame = vid.read()
-            fgmask = fgbg.apply(frame, learningRate = 0)
+            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
+            if return_type == "array":
+                for i in range (0, len(bgimage)):
+                    fgmask = fgbg.apply(bgimage[i])
+                    
+            elif return_type == "image":
+                for i in range (0, 30):
+                    fgmask = fgbg.apply(bgimage)
+
+            fgmask = fgbg.apply(frame)
             frame_crop = frame[int(y1):int(y2), int(x1):int(x2)]
             fgmask_crop = fgmask[int(y1):int(y2), int(x1):int(x2)]
             thresh = cv2.threshold(fgmask_crop, 20, 0xFF,
