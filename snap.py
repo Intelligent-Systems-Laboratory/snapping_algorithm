@@ -15,6 +15,8 @@ class Snap:
         self.SNAP_BACKGROUND_SUBTRACTION_CNT = 6
         self.SNAP_BACKGROUND_SUBTRACTION_CNT_NO_SHADOW = 7
         self.SNAP_TO_BIGGER = 10
+        self.previous_video = None
+        self.previous_bgimage = None
 
 
     def show_flow_hsv(self, flow, show_style=1):
@@ -33,38 +35,83 @@ class Snap:
 
         bgr = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
         return bgr
+    
+
+    def set_previous_video(self, vid_name, bgimage):
+        self.previous_video = vid_name
+        self.previous_bgimage = bgimage
 
 
-    def get_bgimage(self, vid, frame_skip = 10, return_type = "array"):
-        if isinstance(vid, cv2.VideoCapture) == False:
-            print("Video must be a cv2.VideoCapture")
-            return None
-        fgbg = cv2.bgsegm.createBackgroundSubtractorCNT()
-        vid.set(cv2.CAP_PROP_POS_FRAMES, frame_skip - 1)
-        bgimage_list = []
-        while True:
-            ret, frame = vid.read()
-            if ret:
-                fgmask = fgbg.apply(frame)
-            else:
-                break
+    def get_previous_bgimage(self):
+        return self.previous_bgimage
 
-            if int(vid.get(cv2.CAP_PROP_POS_FRAMES)) % (frame_skip * 50) == 0:
-                bgimage_list.append(fgbg.getBackgroundImage())
-                
-            count = 0
-            for count in range(1,frame_skip):
-                if count == frame_skip:
-                    break
-                else:
-                    ret, frame = vid.read()
-        if return_type == "array":
-            return bgimage_list
-        elif return_type == "image":
-            return bgimage_list[len(bgimage_list)-1]
+
+    def is_same_video(self, vid_name):
+        if vid_name == self.previous_video:
+            return True
         else:
-            print("Valid return_type: array, image")
-            return None
+            return False
+
+
+    def get_bgimage(self, vid, vid_name, frame_skip = 10, return_type = "image"):
+        if self.is_same_video(vid_name) == False:
+            if isinstance(vid, cv2.VideoCapture) == False:
+                print("Video must be a cv2.VideoCapture")
+                return None
+            fgbg = cv2.bgsegm.createBackgroundSubtractorCNT()
+            vid.set(cv2.CAP_PROP_POS_FRAMES, frame_skip - 1)
+            bgimage_list = []
+            if frame_skip == 0:
+                vid.set(cv2.CAP_PROP_POS_FRAMES, 0)
+                while True:
+                    ret, frame = vid.read()
+                    if ret:
+                        fgmask = fgbg.apply(frame)
+                    else:
+                        break
+                bgimage = fgbg.getBackgroundImage()
+                self.set_previous_video(vid_name, bgimage)
+            else: 
+                vid.set(cv2.CAP_PROP_POS_FRAMES, frame_skip - 1)
+                while True:
+                    ret, frame = vid.read()
+                    if ret:
+                        fgmask = fgbg.apply(frame)
+                    else:
+                        break
+
+                    if int(vid.get(cv2.CAP_PROP_POS_FRAMES)) % (frame_skip * 50) == 0:
+                        bgimage_list.append(fgbg.getBackgroundImage())
+                        
+                    count = 0
+                    for count in range(1,frame_skip):
+                        if count == frame_skip:
+                            break
+                        else:
+                            ret, frame = vid.read()
+                self.set_previous_video(vid_name, bgimage_list)
+            if return_type == "array":
+                return bgimage_list
+            elif return_type == "image" and frame_skip == 0:
+                return bgimage
+            elif return_type == "image":
+                return bgimage_list[len(bgimage_list)-1]
+            else:
+                print("Valid return_type: array, image")
+                return None
+
+        else:
+            print("Using previous data")
+            bgimage_list = self.get_previous_bgimage()
+            if return_type == "array":
+                return bgimage_list
+            elif return_type == "image" and frame_skip == 0:
+                return bgimage_list
+            elif return_type == "image":
+                return bgimage_list[len(bgimage_list)-1]
+            else:
+                print("Valid return_type: array, image")
+                return None
 
     # snapping_algorithm can be called by the following:
     # snap_algorithm(flag, img, x1, y1, x2, y2) -- thresholding
@@ -470,32 +517,37 @@ class Snap:
 
 
         # snapping with CNT background subtraction w/ Shadow Removal
-        elif args[0] == 7 and len(args) == 7:
+        elif args[0] == 7 and len(args) == 8:
             print("Using CNT Background Subtraction Method w/ Shadow Removal")
             if(isinstance(args[1], cv2.VideoCapture)):
                 vid = args[1]
             else:
                 print("First argument should be a video")
                 return ValueError
-            if(isinstance(args[2], int)):
-                frame_no = args[2]
+            if(isinstance(args[2], str)):
+                vid_name = args[2]
             else:
-                print("Second argument should be a frame number")
+                print("Second argument should be a video name")
                 return ValueError
-            if isinstance(args[3], (float, int)) and isinstance(args[4], (float, int)) or isinstance(args[5], (float, int)) or isinstance(args[6], (float, int)):
-                x1 = args[3]
-                y1 = args[4]
-                x2 = args[5]
-                y2 = args[6]
+            if(isinstance(args[3], int)):
+                frame_no = args[3]
             else:
-                print("Argument 3 to 6 should be int or float")
+                print("Third argument should be a frame number")
+                return ValueError
+            if isinstance(args[4], (float, int)) and isinstance(args[5], (float, int)) or isinstance(args[6], (float, int)) or isinstance(args[7], (float, int)):
+                x1 = args[4]
+                y1 = args[5]
+                x2 = args[6]
+                y2 = args[7]
+            else:
+                print("Argument 4 to 7 should be int or float")
                 return ValueError
             
-            fgbg = cv2.createBackgroundSubtractorKNN()
+            fgbg = cv2.createBackgroundSubtractorMOG2()
             fgbg.setShadowValue(0)
 
             return_type = "image"
-            bgimage = self.get_bgimage(vid, return_type = return_type)
+            bgimage = self.get_bgimage(vid, vid_name, frame_skip = 0, return_type = return_type)
             vid.set(cv2.CAP_PROP_POS_FRAMES, frame_no - 1)
             ret, frame = vid.read()
             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
@@ -511,7 +563,7 @@ class Snap:
             fgmask = fgbg.apply(frame)
             frame_crop = frame[int(y1):int(y2), int(x1):int(x2)]
             fgmask_crop = fgmask[int(y1):int(y2), int(x1):int(x2)]
-            thresh = cv2.threshold(fgmask_crop, 20, 0xFF,
+            thresh = cv2.threshold(fgmask_crop, 45, 0xFF,
                                         cv2.THRESH_BINARY)[1]
             cnts, hierarchy = cv2.findContours(thresh, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
             area_list = []
