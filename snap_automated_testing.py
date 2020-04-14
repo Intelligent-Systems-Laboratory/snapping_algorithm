@@ -19,6 +19,22 @@ def time_print(dateTimeObj):
     print(dateTimeObj.year, '/', dateTimeObj.month, '/', dateTimeObj.day)
     print(dateTimeObj.hour, ':', dateTimeObj.minute, ':', dateTimeObj.second, '.', dateTimeObj.microsecond)
 
+def measureAccuracy (truth_xmin, truth_xmax, truth_ymin, truth_ymax, box_xmin, box_xmax, box_ymin, box_ymax):
+    truthArea = (truth_xmax - truth_xmin) * (truth_ymax - truth_ymin)
+    boxArea = (box_xmax - box_xmin) * (box_ymax - box_ymin)
+    leftIntersect = max(truth_xmin, box_xmin)
+    rightIntersect = min(truth_xmax, box_xmax)
+    bottomIntersect = max(truth_ymin, box_ymin)
+    topIntersect = min(truth_ymax, box_ymax)
+
+    if (rightIntersect < leftIntersect) or (topIntersect < bottomIntersect):
+        overlapArea = 0
+    else:
+        overlapArea = (rightIntesect - leftIntersect) * (topIntersect - bottomIntersect)
+        totalArea = truthArea + boxArea - overlapArea
+
+    accuracy = overlapArea / totalArea
+    return accuracy
 
 def run(vid_name,FRAME_NO,bboxx1,bboxy1,bboxx2,bboxy2,folder_name,snap_type):
     # the video could only use up to 400 frames for high accuracy
