@@ -3,12 +3,11 @@ import numpy as np
 import imutils
 import argparse
 import os.path
+import csv
+
 from datetime import datetime
-
 from os import path
-
 from snap import Snap
-
 from array import *
 
 def time():
@@ -177,65 +176,13 @@ for filename in args["run_from_file"]:
         accuracy = measureAccuracy(truth_x1, truth_x2, truth_y1, truth_y2, box_xmin, box_xmax, box_ymin, box_ymax)
         print(str(accuracy*100) + '%')
 
+        # Records accuracy measure in a csv file
+        with open('accuracy.csv', 'a') as csvfile:
+            writer = csv.writer(csvfile)
+            writer.writerow([video, frame_no, accuracy])
+
         print("\n\n")
 
-'''
-for case in groundTruthList:
-    print("video: " + str(case.videoFile))
-    print("frame: " + str(case.frame))
-    print("x1: " + str(case.x1))
-    print("y1: " + str(case.y1))
-    print("x2: " + str(case.x2))
-    print("y2: " + str(case.y2))
-
-    print("\n\n")
-'''
-
-'''
-    if path.exists(filename[0:-4]) == False:
-        os.mkdir(filename[0:-4])
-        print(str(filename[0:-4]) + " directory made")
-    with open (filename, 'rt') as myfile:
-        for line in myfile:
-            if i%8 == 1:
-                video = line.rstrip('\n').replace('vid name: ','')
-                folder_name = str(filename[0:-4]) + "/" + str(video[7:-4])
-                print(folder_name)
-                print('folder name: ' + folder_name)
-                if path.exists(folder_name) == False:
-                    os.mkdir(folder_name)
-                    print(str(folder_name) + " directory made")
-            if i%8 == 2:
-                frame_no = int(line.rstrip('\n').replace('frame no: ',''))
-            if i%8 == 3:
-                x1 = int(line.rstrip('\n').replace('x1: ',''))
-            if i%8 == 4:
-                y1 = int(line.rstrip('\n').replace('y1: ',''))
-            if i%8 == 5:
-                x2 = int(line.rstrip('\n').replace('x2: ',''))
-            if i%8 == 6:
-                y2 = int(line.rstrip('\n').replace('y2: ',''))
-            if i%8 == 7:
-                print(video)
-                print(frame_no)
-                print(int(x1))
-                print(int(y1))
-                print(int(x2))
-                print(int(y2))
-            if i%8 == 0:
-                box_xmin, box_xmax, box_ymin, box_ymax = run(video,frame_no,x1,y1,x2,y2,folder_name,snap_type)
-                
-                # Printing accuracy
-                accuracy = measureAccuracy (x1, x2, y1, y2, box_xmin, box_xmax, box_ymin, box_ymax)
-                print(box_xmin)
-                print(box_xmax)
-                print(box_ymin)
-                print(box_ymax)
-                print(accuracy)
-                
-                print("\n\n")
-            i = i+1
-'''
 end_time = time()
 
 time_print(start_time)
