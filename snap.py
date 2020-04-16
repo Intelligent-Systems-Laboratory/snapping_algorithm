@@ -14,6 +14,7 @@ class Snap:
         self.SNAP_BACKGROUND_SUBTRACTION_MOG2 = 5
         self.SNAP_BACKGROUND_SUBTRACTION_CNT = 6
         self.SNAP_BACKGROUND_SUBTRACTION_CNT_NO_SHADOW = 7
+        self.SNAP_BGSUB_WITH_GRABCUT = 8
         self.SNAP_TO_BIGGER = 10
         self.previous_video = None
         self.previous_bgimage = None
@@ -40,7 +41,7 @@ class Snap:
     def set_previous_video(self, vid_name, bgimage):
         self.previous_video = vid_name
         self.previous_bgimage = bgimage
-
+        # for mog2 usage, bgimage is fgbg storing the learned kernel
 
     def get_previous_bgimage(self):
         return self.previous_bgimage
@@ -128,10 +129,10 @@ class Snap:
                 print("First argument should be an image")
                 return ValueError
             if isinstance(args[2], (float, int)) and isinstance(args[3], (float, int)) or isinstance(args[4], (float, int)) or isinstance(args[5], (float, int)):
-                x1 = args[2]
-                y1 = args[3]
-                x2 = args[4]
-                y2 = args[5]
+                x1 = int(args[2])
+                y1 = int(args[3])
+                x2 = int(args[4])
+                y2 = int(args[5])
             else:
                 print("Argument 2 to 5 should be int or float")
                 return ValueError
@@ -303,10 +304,10 @@ class Snap:
                 print("First argument should be an image")
                 return ValueError
             if isinstance(args[2], (float, int)) and isinstance(args[3], (float, int)) or isinstance(args[4], (float, int)) or isinstance(args[5], (float, int)):
-                x1 = args[2]
-                y1 = args[3]
-                x2 = args[4]
-                y2 = args[5]
+                x1 = int(args[2])
+                y1 = int(args[3])
+                x2 = int(args[4])
+                y2 = int(args[5])
             else:
                 print("Argument 3 to 6 should be int or float")
                 return ValueError
@@ -315,16 +316,17 @@ class Snap:
             bgdModel = np.zeros((1,65),np.float64)
             fgdModel = np.zeros((1,65),np.float64)
 
-            rect = ((x1, y1), (x2, y2))
-            print(type(rect))
+            w = x2 - x1
+            h = y2 - y1
+            rect = (x1, y1, w, h)
 
-            cv2.grabCut(img,mask,rect,bgdModel,fgdModel,10,cv2.GC_INIT_WITH_RECT) 
+            cv2.grabCut(img,mask,rect,bgdModel,fgdModel,5,cv2.GC_INIT_WITH_RECT) 
             display = img.copy()
             mask2 = np.where((mask==2)|(mask==0),0,1).astype('uint8')
             grabcut_crop = img*mask2[:,:,np.newaxis]
             img2 = np.where(grabcut_crop!=0,255, grabcut_crop).astype('uint8')
-            img2 = cv2.cvtColor(img2, cv2.COLOR_BGR2GRAY) 
-            thresh = cv2.threshold(img2,127,255,cv2.THRESH_BINARY)
+            img2 = cv2.cvtColor(img2, cv2.COLOR_BGR2GRAY)
+            thresh = cv2.threshold(img2,127,255,cv2.THRESH_BINARY)[1]
             cnts, hierarchy = cv2.findContours(thresh, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
             area_list = []
             rec_list = []
@@ -343,49 +345,58 @@ class Snap:
                 nX, nY, w, h = cv2.boundingRect(rec_list[area_list.index(max(area_list))])
                 print("startX: ",nX, " startY: ", nY, " w: ", w, " h: ", h)
                 cv2.rectangle(display, (nX, nY), (nX + w, nY + h), (0, 0xFF, 0), 4)
-                return thresh, grabcut_crop, display
+                px1 = int(nX)
+                py1 = int(nY)
+                px2 = int(nX + w)
+                py2 = int(nY + h)
+                return thresh, grabcut_crop, display, px1, px2, py1, py2
 
 
         # MOG2 Background Subtraction
-        elif args[0] == 5 and len(args) == 7:
+        elif args[0] == 5 and len(args) == 8:
             print("Using MOG2 Background Subtraction Method")
             if(isinstance(args[1], cv2.VideoCapture)):
                 vid = args[1]
             else:
                 print("First argument should be a video")
                 return ValueError
-            if(isinstance(args[2], int)):
-                frame_no = args[2]
+            if(isinstance(args[2], str)):
+                vid_name = args[2]
+            else:
+                print("Second argument should be a video name")
+                return ValueError
+            if(isinstance(args[3], int)):
+                frame_no = args[3]
             else:
                 print("Second argument should be a frame number")
                 return ValueError
-            if isinstance(args[3], (float, int)) and isinstance(args[4], (float, int)) or isinstance(args[5], (float, int)) or isinstance(args[6], (float, int)):
-                x1 = args[3]
-                y1 = args[4]
-                x2 = args[5]
-                y2 = args[6]
+            if isinstance(args[4], (float, int)) and isinstance(args[5], (float, int)) or isinstance(args[6], (float, int)) or isinstance(args[7], (float, int)):
+                x1 = args[4]
+                y1 = args[5]
+                x2 = args[6]
+                y2 = args[7]
             else:
                 print("Argument 3 to 6 should be int or float")
                 return ValueError
             
-            fgbg = cv2.createBackgroundSubtractorMOG2()
-            fgbg.setShadowValue(0)
-            
-            frame_skip = 10
-            vid.set(cv2.CAP_PROP_POS_FRAMES, 9)
+            if self.is_same_video(vid_name) == False: 
+                fgbg = cv2.createBackgroundSubtractorMOG2()
+                fgbg.setShadowValue(0)
+                frame_skip = 10
+                vid.set(cv2.CAP_PROP_POS_FRAMES, 9)
 
-            while True:
-                ret, frame = vid.read()
-                if ret:
-                    fgmask = fgbg.apply(frame)
-                else:
-                    break
-                count = 0
-                for count in range(1, frame_skip):
-                    if count == frame_skip:
-                        break
-                    else:
+                while True:
                         ret, frame = vid.read()
+                        if ret:
+                            fgmask = fgbg.apply(frame)
+                        else:
+                            break
+                self.set_previous_video(vid_name, fgbg)
+
+            else:
+                print("Using previous fgbg")
+                fgbg = self.get_previous_bgimage()
+                fgbg.setShadowValue(0)
             
             while True:
                 vid.set(cv2.CAP_PROP_POS_FRAMES, frame_no - 1)
@@ -543,7 +554,7 @@ class Snap:
                 print("Argument 4 to 7 should be int or float")
                 return ValueError
             
-            fgbg = cv2.createBackgroundSubtractorMOG2()
+            fgbg = cv2.createBackgroundSubtractorKNN()
             fgbg.setShadowValue(0)
 
             return_type = "image"
