@@ -320,7 +320,7 @@ class Snap:
 
             w = x2 - x1
             h = y2 - y1
-            rect = (x1, y1, x2, y2)
+            rect = (x1, y1, w, h)
 
             cv2.grabCut(img,mask,rect,bgdModel,fgdModel,5,cv2.GC_INIT_WITH_RECT) 
             display = img.copy()
