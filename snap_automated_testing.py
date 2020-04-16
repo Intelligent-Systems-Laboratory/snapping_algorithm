@@ -93,8 +93,10 @@ def run(vid_name,FRAME_NO,bboxx1,bboxy1,bboxx2,bboxy2,folder_name,snap_type):
     ratioW = W/1028
 
     # Return bbox coordinates along with generated images
-    if snap_type == snap.SNAP_BACKGROUND_SUBTRACTION_KNN or snap_type == snap.SNAP_BACKGROUND_SUBTRACTION_MOG2 or snap_type == snap.SNAP_BACKGROUND_SUBTRACTION_CNT or snap.SNAP_BACKGROUND_SUBTRACTION_CNT_NO_SHADOW:
+    if snap_type == snap.SNAP_BACKGROUND_SUBTRACTION_KNN or snap_type == snap.SNAP_BACKGROUND_SUBTRACTION_MOG2 or snap_type == snap.SNAP_BACKGROUND_SUBTRACTION_CNT:
         thresh, fgmask_crop, frame_crop, imgvis, box_xmin, box_xmax, box_ymin, box_ymax = snap.snap_algorithm(snap_type, vid, FRAME_NO, bboxx1*ratioW, bboxy1*ratioW, bboxx2*ratioW, bboxy2*ratioW)
+    elif snap_type == snap.SNAP_BACKGROUND_SUBTRACTION_CNT_NO_SHADOW:
+        thresh, fgmask_crop, frame_crop, imgvis, box_xmin, box_xmax, box_ymin, box_ymax = snap.snap_algorithm(snap_type, vid, vid_name, FRAME_NO, bboxx1*ratioW, bboxy1*ratioW, bboxx2*ratioW, bboxy2*ratioW)
     elif snap_type == snap.SNAP_GRABCUT:
         thresh, grabcut_crop, display = snap.snap_algorithm(snap_type, imgvis, bboxx1*ratioW, bboxy1*ratioW, bboxx2*ratioW, bboxy2*ratioW)
 
@@ -125,7 +127,7 @@ ap.add_argument("-r", "--run_from_file", required=False, default=None, help="pro
 args = vars(ap.parse_args())
 
 snap = Snap()
-snap_type = snap.SNAP_BACKGROUND_SUBTRACTION_MOG2
+snap_type = snap.SNAP_BACKGROUND_SUBTRACTION_CNT    # Choose snap algorithm here
 i = 1
 
 # Sets list of ground truth bounding boxes
@@ -171,7 +173,8 @@ for filename in args["run_from_file"]:
 
         # Run snapping algorithm
         box_xmin, box_xmax, box_ymin, box_ymax = run(video,frame_no,x1,y1,x2,y2,folder_name,snap_type)
-
+        run(video,frame_no,x1,y1,x2,y2,folder_name,snap_type)
+        
         # Measure accuracy of adjusted bounding box
         accuracy = measureAccuracy(truth_x1, truth_x2, truth_y1, truth_y2, box_xmin, box_xmax, box_ymin, box_ymax)
         print(str(accuracy*100) + '%')

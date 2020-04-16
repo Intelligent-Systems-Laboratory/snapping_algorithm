@@ -291,7 +291,7 @@ class Snap:
                         px2 = int(x1 + nX + w)
                         py2 = int(y1 + nY + h)
                         cv2.rectangle(frame, (px1, py1), (px2, py2), (0, 0xFF, 0), 4)
-                        return thresh, fgmask_crop, frame_crop, frame
+                        return thresh, fgmask_crop, frame_crop, frame, px1, px2, py1, py2
 
 
         # Grabcut Implementation
@@ -513,7 +513,7 @@ class Snap:
                     px2 = int(x1 + nX + w)
                     py2 = int(y1 + nY + h)
                     cv2.rectangle(frame, (px1, py1), (px2, py2), (0, 0xFF, 0), 4)
-                    return background, thresh, fgmask_crop, frame_crop, frame
+                    return thresh, fgmask_crop, frame_crop, frame, px1, px2, py1, py2
 
 
         # snapping with CNT background subtraction w/ Shadow Removal
@@ -598,7 +598,7 @@ class Snap:
                 px2 = int(x1 + nX + w)
                 py2 = int(y1 + nY + h)
                 cv2.rectangle(frame, (px1, py1), (px2, py2), (0, 0xFF, 0), 4)
-                return thresh, fgmask_crop, frame_crop, frame
+                return thresh, fgmask_crop, frame_crop, frame, px1, px2, py1, py2
         
         else:
             print("Error in the arguments")
