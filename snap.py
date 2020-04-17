@@ -44,7 +44,6 @@ class Snap:
         self.previous_bgimage = bgimage
         # for mog2 usage, bgimage is fgbg storing the learned kernel
 
-
     def get_previous_bgimage(self):
         return self.previous_bgimage
 
@@ -131,10 +130,10 @@ class Snap:
                 print("First argument should be an image")
                 return ValueError
             if isinstance(args[2], (float, int)) and isinstance(args[3], (float, int)) or isinstance(args[4], (float, int)) or isinstance(args[5], (float, int)):
-                x1 = args[2]
-                y1 = args[3]
-                x2 = args[4]
-                y2 = args[5]
+                x1 = int(args[2])
+                y1 = int(args[3])
+                x2 = int(args[4])
+                y2 = int(args[5])
             else:
                 print("Argument 2 to 5 should be int or float")
                 return ValueError
@@ -294,7 +293,7 @@ class Snap:
                         px2 = int(x1 + nX + w)
                         py2 = int(y1 + nY + h)
                         cv2.rectangle(frame, (px1, py1), (px2, py2), (0, 0xFF, 0), 4)
-                        return thresh, fgmask_crop, frame_crop, frame
+                        return thresh, fgmask_crop, frame_crop, frame, px1, px2, py1, py2
 
 
         # Grabcut Implementation
@@ -347,7 +346,11 @@ class Snap:
                 nX, nY, w, h = cv2.boundingRect(rec_list[area_list.index(max(area_list))])
                 print("startX: ",nX, " startY: ", nY, " w: ", w, " h: ", h)
                 cv2.rectangle(display, (nX, nY), (nX + w, nY + h), (0, 0xFF, 0), 4)
-                return thresh, grabcut_crop, display
+                px1 = int(nX)
+                py1 = int(nY)
+                px2 = int(nX + w)
+                py2 = int(nY + h)
+                return thresh, grabcut_crop, display, px1, px2, py1, py2
 
 
         # MOG2 Background Subtraction
@@ -437,7 +440,7 @@ class Snap:
                     px2 = int(x1 + nX + w)
                     py2 = int(y1 + nY + h)
                     cv2.rectangle(frame, (px1, py1), (px2, py2), (0, 0xFF, 0), 4)
-                    return thresh, fgmask_crop, frame_crop, frame
+                    return thresh, fgmask_crop, frame_crop, frame, px1, px2, py1, py2
 
 
         # snapping with CNT background subtraction implementation
@@ -522,7 +525,7 @@ class Snap:
                     px2 = int(x1 + nX + w)
                     py2 = int(y1 + nY + h)
                     cv2.rectangle(frame, (px1, py1), (px2, py2), (0, 0xFF, 0), 4)
-                    return background, thresh, fgmask_crop, frame_crop, frame
+                    return thresh, fgmask_crop, frame_crop, frame, px1, px2, py1, py2
 
 
         # snapping with CNT background subtraction w/ Shadow Removal
@@ -607,7 +610,7 @@ class Snap:
                 px2 = int(x1 + nX + w)
                 py2 = int(y1 + nY + h)
                 cv2.rectangle(frame, (px1, py1), (px2, py2), (0, 0xFF, 0), 4)
-                return thresh, fgmask_crop, frame_crop, frame
+                return thresh, fgmask_crop, frame_crop, frame, px1, px2, py1, py2
         
         else:
             print("Error in the arguments")
