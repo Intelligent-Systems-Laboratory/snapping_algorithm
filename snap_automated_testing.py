@@ -78,7 +78,9 @@ def measureAccuracy (truth_xmin, truth_xmax, truth_ymin, truth_ymax, box_xmin, b
         totalArea = truthArea + boxArea - overlapArea
         accuracy = overlapArea / totalArea
 
-    return accuracy
+    sizeError = (boxArea - truthArea) / truthArea
+
+    return accuracy, sizeError
 
 def run(vid_name,FRAME_NO,bboxx1,bboxy1,bboxx2,bboxy2,folder_name,snap_type):
     # the video could only use up to 400 frames for high accuracy
@@ -127,7 +129,7 @@ ap.add_argument("-r", "--run_from_file", required=False, default=None, help="pro
 args = vars(ap.parse_args())
 
 snap = Snap()
-snap_type = snap.SNAP_BACKGROUND_SUBTRACTION_MOG2   # Choose snap algorithm here
+snap_type = snap.SNAP_BACKGROUND_SUBTRACTION_KNN  # Choose snap algorithm here
 i = 1
 
 # Sets list of ground truth bounding boxes
@@ -181,13 +183,28 @@ for filename in args["run_from_file"]:
         print(box_ymax)
 
         # Measure accuracy of adjusted bounding box
-        accuracy = measureAccuracy(truth_x1, truth_x2, truth_y1, truth_y2, box_xmin, box_xmax, box_ymin, box_ymax)
+        accuracy, sizeError = measureAccuracy(truth_x1, truth_x2, truth_y1, truth_y2, box_xmin, box_xmax, box_ymin, box_ymax)
         print(str(accuracy*100) + '%')
+
+        # Classify accuracy
+        accThreshGood = 0.5
+        accThreshClose = 0.8
+        
+        if accuracy > accThreshGood:
+            classification = 'Good Snap'
+        elif accuracy > accThreshClose:
+            classification = 'Close Call'
+        else:
+            if sizeError > 0:
+                classification = 'Box too big'
+            else:
+                classification = 'Box too small'
+            
 
         # Records accuracy measure in a csv file
         with open('accuracy.csv', 'a') as csvfile:
             writer = csv.writer(csvfile)
-            writer.writerow([filename,video[7:-4], frame_no, accuracy])
+            writer.writerow([filename,video[7:-4], frame_no, accuracy, sizeError, classification])
 
         print("\n\n")
 
