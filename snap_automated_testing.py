@@ -187,8 +187,8 @@ for filename in args["run_from_file"]:
         print(str(accuracy*100) + '%')
 
         # Classify accuracy
-        accThreshGood = 0.5
-        accThreshClose = 0.8
+        accThreshGood = 0.85
+        accThreshClose = 0.75
         
         if accuracy > accThreshGood:
             classification = 'Good Snap'
