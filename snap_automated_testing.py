@@ -93,9 +93,9 @@ def run(vid_name,FRAME_NO,bboxx1,bboxy1,bboxx2,bboxy2,folder_name,snap_type):
     ratioW = W/1028
 
     # Return bbox coordinates along with generated images
-    if snap_type == snap.SNAP_BACKGROUND_SUBTRACTION_KNN or snap_type == snap.SNAP_BACKGROUND_SUBTRACTION_MOG2 or snap_type == snap.SNAP_BACKGROUND_SUBTRACTION_CNT:
+    if snap_type == snap.SNAP_BACKGROUND_SUBTRACTION_KNN or snap_type == snap.SNAP_BACKGROUND_SUBTRACTION_CNT:
         thresh, fgmask_crop, frame_crop, imgvis, box_xmin, box_xmax, box_ymin, box_ymax = snap.snap_algorithm(snap_type, vid, FRAME_NO, bboxx1*ratioW, bboxy1*ratioW, bboxx2*ratioW, bboxy2*ratioW)
-    elif snap_type == snap.SNAP_BACKGROUND_SUBTRACTION_CNT_NO_SHADOW:
+    elif snap_type == snap.SNAP_BACKGROUND_SUBTRACTION_CNT_NO_SHADOW or snap_type == snap.SNAP_BACKGROUND_SUBTRACTION_MOG2:
         thresh, fgmask_crop, frame_crop, imgvis, box_xmin, box_xmax, box_ymin, box_ymax = snap.snap_algorithm(snap_type, vid, vid_name, FRAME_NO, bboxx1*ratioW, bboxy1*ratioW, bboxx2*ratioW, bboxy2*ratioW)
     elif snap_type == snap.SNAP_GRABCUT:
         thresh, grabcut_crop, display, box_xmin, box_xmax, box_ymin, box_ymax = snap.snap_algorithm(snap_type, img, bboxx1*ratioW, bboxy1*ratioW, bboxx2*ratioW, bboxy2*ratioW)
@@ -127,7 +127,7 @@ ap.add_argument("-r", "--run_from_file", required=False, default=None, help="pro
 args = vars(ap.parse_args())
 
 snap = Snap()
-snap_type = snap.SNAP_GRABCUT   # Choose snap algorithm here
+snap_type = snap.SNAP_BACKGROUND_SUBTRACTION_MOG2   # Choose snap algorithm here
 i = 1
 
 # Sets list of ground truth bounding boxes
@@ -135,7 +135,7 @@ groundTruthFileName = "ground_truth.txt"
 groundTruthList = textFileToCaseList(groundTruthFileName)
 
 if args["run_from_file"] == None:
-    args["run_from_file"] = ["small_boxes.txt"]
+    args["run_from_file"] = ["small_boxes.txt", "medium_boxes.txt", "large_boxes.txt"]
 else:
     args["run_from_file"] = [args["run_from_file"]]
 
@@ -187,7 +187,7 @@ for filename in args["run_from_file"]:
         # Records accuracy measure in a csv file
         with open('accuracy.csv', 'a') as csvfile:
             writer = csv.writer(csvfile)
-            writer.writerow([video, frame_no, accuracy])
+            writer.writerow([filename,video[7:-4], frame_no, accuracy])
 
         print("\n\n")
 
