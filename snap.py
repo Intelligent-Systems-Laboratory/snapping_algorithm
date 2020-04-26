@@ -1,5 +1,6 @@
 import cv2
 from cv2 import bgsegm
+from PIL import Image
 import numpy as np
 import imutils
 import argparse
@@ -16,6 +17,7 @@ class Snap:
         self.SNAP_BACKGROUND_SUBTRACTION_CNT = 6
         self.SNAP_BACKGROUND_SUBTRACTION_CNT_NO_SHADOW = 7
         self.SNAP_IMPROVED_GRABCUT = 8
+        self.SNAP_GRABCUT_WITH_CNT = 9
         self.SNAP_TO_BIGGER = 10
         self.previous_video = None
         self.previous_bgimage = None
@@ -293,21 +295,17 @@ class Snap:
 
 
         # Grabcut Implementation
-        elif (args[0] == 4 or args[0] == 8) and len(args) == 7:
+        elif (args[0] == 4 or args[0] == 8) and len(args) == 6:
             if(isinstance(args[1], cv2.VideoCapture)):
-                vid = args[1]
+                img = args[1]
             else:
                 print("First argument should be an image")
                 return ValueError
-            if(isinstance(args[2], int)):
-                frame_no = args[2]
-            else:
-                print("Second argument should be an integer")
-            if isinstance(args[3], (float, int)) and isinstance(args[4], (float, int)) and isinstance(args[5], (float, int)) and isinstance(args[6], (float, int)):
-                x1 = int(args[3])
-                y1 = int(args[4])
-                x2 = int(args[5])
-                y2 = int(args[6])
+            if isinstance(args[2], (float, int)) and isinstance(args[3], (float, int)) and isinstance(args[4], (float, int)) and isinstance(args[5], (float, int)):
+                x1 = int(args[2])
+                y1 = int(args[3])
+                x2 = int(args[4])
+                y2 = int(args[5])
             else:
                 print("Argument 3 to 6 should be int or float")
                 return ValueError
@@ -324,24 +322,6 @@ class Snap:
 
             elif args[0] == 8: #Enhancement, placing filters and improving grabcut
                 print("Using Enhanced Grabcut Algorithm")
-                # initialize background subtraction to have a mask
-                fgbg = bgsegm.createBackgroundSubtractorCNT()
-                if frame_no < 50:
-                    vid.set(1, 0)
-                else:
-                    vid.set(1, frame_no - 50)
-
-                while True:
-                    ret, frame = vid.read()
-                    if int(vid.get(cv2.CAP_PROP_POS_FRAMES)) > frame_no:
-                        break
-                    elif ret:
-                        fgmask = fgbg.apply(frame)
-                    else:
-                        break
-                
-                vid.set(1, frame_no - 1)
-                ret, img = vid.read()
                 (H,W) = img.shape[:2]
 
                 # lessen the area to be under Grabcut:
@@ -369,16 +349,8 @@ class Snap:
 
                 # creating the mask
                 mask = np.zeros(img_crop.shape[:2],np.uint8)
-                fgmask = fgbg.apply(img)
-                fgmask_crop = fgmask[int(ny1):int(ny2), int(nx1):int(nx2)]
-                thresh = cv2.threshold(fgmask_crop, 20, 0xFF, cv2.THRESH_BINARY)[1]
-                # fgmask = cv2.cvtColor(fgmask, cv2.COLOR_BGR2GRAY)
                 kernel = np.ones((5,5),np.uint8)
-                fgmask = cv2.erode(thresh, kernel, iterations = 1)
-                mask = np.where(fgmask>127,0,1).astype('uint8')
                 img = img_median
-                # img2 = Image.fromarray(mask, 'RGB')
-                # img2.show()
 
                 (mask_h, mask_w) = mask.shape[:2]
 
@@ -682,7 +654,7 @@ class Snap:
         
 
         # snapping combined Grabcut and CNT combined
-        elif args[0] == 8 and len(args) == 8:
+        elif args[0] == 9 and len(args) == 8:
             print("Using Grabcut with CNT")
             if(isinstance(args[1], cv2.VideoCapture)):
                 vid = args[1]
@@ -708,108 +680,65 @@ class Snap:
                 print("Argument 4 to 7 should be int or float")
                 return ValueError
             
-            bgdModel = np.zeros((1,65), np.float64)
-            fgdModel = np.zeros((1,65), np.float64)
-            w = x2 - x1
-            h = y2 - y1
+            if self.is_same_video(vid_name) == False: 
+                fgbg = bgsegm.createBackgroundSubtractorCNT()
 
-            fgbg = bgsegm.createBackgroundSubtractorCNT()
-            if frame_no < 50:
-                vid.set(1, 0)
+                while True:
+                    ret, frame = vid.read()
+                    if ret:
+                        fgmask = fgbg.apply(frame)
+                    else:
+                        break
+                self.set_previous_video(vid_name, fgbg)
+
             else:
-                vid.set(1, frame_no - 50)
-
-            while True:
-                ret, frame = vid.read()
-                if int(vid.get(cv2.CAP_PROP_POS_FRAMES)) > frame_no:
-                    break
-                elif ret:
-                    fgmask = fgbg.apply(frame)
-                else:
-                    break
-            
-            vid.set(1, frame_no - 1)
-            ret, img = vid.read()
-            (H,W) = img.shape[:2]
-
-            # lessen the area to be under Grabcut:
-            variable_expansion = 10 # change the value for the variable expansion
-            if x1 <= variable_expansion:
-                nx1 = 0
-            else:
-                nx1 = x1 - variable_expansion
-            if y1 <= variable_expansion:
-                ny1 = 0
-            else:
-                ny1 = y1 - variable_expansion
-            if x2 >= W - variable_expansion:
-                nx2 = W
-            else:
-                nx2 = x2 + variable_expansion
-            if y2 >= H - variable_expansion:
-                ny2 = H
-            else:
-                ny2 = y2 - variable_expansion
-            
-            # cropping and filtering
-            img_crop = img[int(ny1):int(ny2), int(nx1):int(nx2)]
-            img_median = cv2.medianBlur(img_crop, 5)
-
-            # creating the mask
-            mask = np.zeros(img_crop.shape[:2],np.uint8)
-            fgmask = fgbg.apply(img)
-            fgmask_crop = fgmask[int(ny1):int(ny2), int(nx1):int(nx2)]
-            thresh = cv2.threshold(fgmask_crop, 20, 0xFF, cv2.THRESH_BINARY)[1]
-            # fgmask = cv2.cvtColor(fgmask, cv2.COLOR_BGR2GRAY)
-            kernel = np.ones((5,5),np.uint8)
-            fgmask = cv2.erode(thresh, kernel, iterations = 1)
-            mask = np.where(fgmask>127,0,1).astype('uint8')
-            img = img_median
-            # img2 = Image.fromarray(mask, 'RGB')
-            # img2.show()
-
-            (mask_h, mask_w) = mask.shape[:2]
-
-            for iter in range(0, mask_w-1):
-                mask[5][iter] = 1
-                mask[mask_h-5][iter] = 1
-            for iter in range(0, mask_h-1):
-                mask[iter][5] = 1
-                mask[iter][mask_w-5] = 1 
-            rect = (variable_expansion,variable_expansion,w-variable_expansion,h-variable_expansion)
-
-            cv2.grabCut(img,mask,rect,bgdModel,fgdModel,20,cv2.GC_BGD) 
-            display = img.copy()
-            mask2 = np.where((mask==2)|(mask==0),0,1).astype('uint8')
-            grabcut_crop = img*mask2[:,:,np.newaxis]
-            img2 = np.where(grabcut_crop!=0,255, grabcut_crop).astype('uint8')
-            img2 = cv2.cvtColor(img2, cv2.COLOR_BGR2GRAY)
-            thresh = cv2.threshold(img2,127,255,cv2.THRESH_BINARY)[1]
-            cnts, hierarchy = cv2.findContours(thresh, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
-            area_list = []
-            rec_list = []
-
-            for c in cnts:    
-                (nX, nY, w, h) = cv2.boundingRect(c)
-                cnts_area = cv2.contourArea(c)
-                rec_list.append(c)
-                area_list.append(cnts_area)
-
-            if area_list == []:
-                print("No contours found")
-                return mask, thresh, grabcut_crop, display, 0, 0, 0, 0
-
-            else: 
-                nX, nY, w, h = cv2.boundingRect(rec_list[area_list.index(max(area_list))])
-                print("startX: ",nX, " startY: ", nY, " w: ", w, " h: ", h)
-                cv2.rectangle(display, (nX, nY), (nX + w, nY + h), (0, 0xFF, 0), 4)
-                px1 = int(nX + x1)
-                py1 = int(nY + y1)
-                px2 = int(nX + w + x1)
-                py2 = int(nY + h + y1)
-                return mask, thresh, grabcut_crop, display, px1, px2, py1, py2
-
+                print("Using previous fgbg")
+                fgbg = self.get_previous_bgimage()
+                fgbg.setShadowValue(0)
                 
+            while True:
+                vid.set(cv2.CAP_PROP_POS_FRAMES, frame_no - 1)
+                ret, frame = vid.read()
+                fgmask = fgbg.apply(frame)
+                frame_crop = frame[int(y1):int(y2), int(x1):int(x2)]
+                fgmask_crop = fgmask[int(y1):int(y2), int(x1):int(x2)]
+                thresh = cv2.threshold(fgmask_crop, 25, 0xFF,
+                                        cv2.THRESH_BINARY)[1]
+                cnts, hierarchy = cv2.findContours(thresh, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+                area_list = []
+                rec_list = []
+
+                for c in cnts:
+                    bbox_list = []
+                    (nX, nY, w, h) = cv2.boundingRect(c)
+                    cnts_area = cv2.contourArea(c)
+
+                    bbox_list.append(nX)
+                    bbox_list.append(nY)
+                    bbox_list.append(w)
+                    bbox_list.append(h)
+
+                    rec_list.append(bbox_list)
+                    area_list.append(cnts_area)
+
+                if area_list == []:
+                    print("No contours found")
+                    return thresh, fgmask_crop, frame_crop, frame
+
+                else:    
+                    bbox_list = rec_list[area_list.index(max(area_list))]
+                    nX = bbox_list[0]
+                    nY = bbox_list[1]
+                    w = bbox_list[2]
+                    h = bbox_list[3]
+                    print("startX: ",nX, " startY: ", nY, " w: ", w, " h: ", h)
+                    px1 = int(x1 + nX)
+                    py1 = int(y1 + nY)
+                    px2 = int(x1 + nX + w)
+                    py2 = int(y1 + nY + h)
+                    cv2.rectangle(frame, (px1, py1), (px2, py2), (0, 0xFF, 0), 4)
+                    return thresh, fgmask_crop, frame_crop, frame, px1, px2, py1, py2
+
         else:
             print("Error in the arguments")
             return ValueError
