@@ -296,7 +296,7 @@ class Snap:
 
         # Grabcut Implementation
         elif (args[0] == 4 or args[0] == 8) and len(args) == 6:
-            if(isinstance(args[1], cv2.VideoCapture)):
+            if(isinstance(args[1], np.ndarray)):
                 img = args[1]
             else:
                 print("First argument should be an image")
