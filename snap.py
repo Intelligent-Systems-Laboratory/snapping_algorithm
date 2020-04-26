@@ -323,46 +323,29 @@ class Snap:
             elif args[0] == 8: #Enhancement, placing filters and improving grabcut
                 print("Using Enhanced Grabcut Algorithm")
                 (H,W) = img.shape[:2]
-
-                # lessen the area to be under Grabcut:
-                variable_expansion = 10 # change the value for the variable expansion
-                if x1 <= variable_expansion:
-                    nx1 = 0
-                else:
-                    nx1 = x1 - variable_expansion
-                if y1 <= variable_expansion:
-                    ny1 = 0
-                else:
-                    ny1 = y1 - variable_expansion
-                if x2 >= W - variable_expansion:
-                    nx2 = W
-                else:
-                    nx2 = x2 + variable_expansion
-                if y2 >= H - variable_expansion:
-                    ny2 = H
-                else:
-                    ny2 = y2 - variable_expansion
                 
                 # cropping and filtering
-                img_crop = img[int(ny1):int(ny2), int(nx1):int(nx2)]
-                img_median = cv2.medianBlur(img_crop, 5)
+                img_crop = img[int(y1):int(y2), int(x1):int(x2)]
+                img = cv2.medianBlur(img_crop, 5)
+                v_ex = 5
 
                 # creating the mask
-                mask = np.zeros(img_crop.shape[:2],np.uint8)
-                kernel = np.ones((5,5),np.uint8)
-                img = img_median
-
+                mask = np.zeros(img.shape[:2],np.uint8)
                 (mask_h, mask_w) = mask.shape[:2]
 
                 for iter in range(0, mask_w-1):
-                    mask[5][iter] = 1
-                    mask[mask_h-5][iter] = 1
+                    mask[v_ex][iter] = 1
+                    mask[v_ex+1][iter] = 1
+                    mask[mask_h-v_ex][iter] = 1
+                    mask[mask_h-v_ex-1][iter] = 1
                 for iter in range(0, mask_h-1):
-                    mask[iter][5] = 1
-                    mask[iter][mask_w-5] = 1 
-                rect = (variable_expansion,variable_expansion,w-variable_expansion,h-variable_expansion)
+                    mask[iter][v_ex] = 1
+                    mask[iter][v_ex+1] = 1
+                    mask[iter][mask_w-v_ex] = 1
+                    mask[iter][mask_w-v_ex-1] = 1
+                rect = (v_ex,v_ex,w-v_ex,h-v_ex)
 
-            cv2.grabCut(img,mask,rect,bgdModel,fgdModel,20,cv2.GC_BGD) 
+            cv2.grabCut(img,mask,rect,bgdModel,fgdModel,25,cv2.GC_BGD) 
             display = img.copy()
             mask2 = np.where((mask==2)|(mask==0),0,1).astype('uint8')
             grabcut_crop = img*mask2[:,:,np.newaxis]
@@ -381,7 +364,7 @@ class Snap:
 
             if area_list == []:
                 print("No contours found")
-                return mask, thresh, grabcut_crop, display, 0, 0, 0, 0
+                return mask2, thresh, grabcut_crop, display, 0, 0, 0, 0
 
             else: 
                 nX, nY, w, h = cv2.boundingRect(rec_list[area_list.index(max(area_list))])
@@ -391,7 +374,7 @@ class Snap:
                 py1 = int(nY + y1)
                 px2 = int(nX + w + x1)
                 py2 = int(nY + h + y1)
-                return mask, thresh, grabcut_crop, display, px1, px2, py1, py2
+                return mask2, thresh, grabcut_crop, display, px1, px2, py1, py2
 
 
         # MOG2 Background Subtraction
