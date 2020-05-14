@@ -3,7 +3,7 @@ import numpy as np
 import imutils
 
 
-def create_mask(v_ex):
+def create_mask(v_ex, w, h):
     mask = np.zeros(img.shape[:2],np.uint8)
     (mask_h, mask_w) = mask.shape[:2]
 
@@ -26,7 +26,6 @@ def grabcut(img, mask, rect):
     bgdModel = np.zeros((1,65), np.float64)
     fgdModel = np.zeros((1,65), np.float64)
     cv2.grabCut(img,mask,rect,bgdModel,fgdModel,25,cv2.GC_BGD) 
-    display = img.copy()
     mask2 = np.where((mask==2)|(mask==0),0,1).astype('uint8')
     grabcut_crop = img*mask2[:,:,np.newaxis]
     img2 = np.where(grabcut_crop!=0,255, grabcut_crop).astype('uint8')

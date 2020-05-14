@@ -36,13 +36,13 @@ class Snap:
 
             print("Using Improved Grabcut Algorithm")
             (H,W) = img.shape[:2]
-            
+            display = img.copy()
+
             # cropping and filtering
             img_crop = img[int(y1):int(y2), int(x1):int(x2)]
             img = cv2.medianBlur(img_crop, 5)
 
-            v_ex = 5
-            mask, rect = create_mask(v_ex)
+            mask, rect = create_mask(5, w, h)
             
             thresh = grabcut(img, mask, rect)
             cnts, hierarchy = cv2.findContours(thresh, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
@@ -57,7 +57,7 @@ class Snap:
 
             if area_list == []:
                 print("No contours found")
-                return mask2, thresh, grabcut_crop, display, 0, 0, 0, 0
+                return mask, thresh, 0, 0, 0, 0
 
             else: 
                 nX, nY, w, h = cv2.boundingRect(rec_list[area_list.index(max(area_list))])
@@ -67,7 +67,7 @@ class Snap:
                 py1 = int(nY + y1)
                 px2 = int(nX + w + x1)
                 py2 = int(nY + h + y1)
-                return mask2, thresh, grabcut_crop, display, px1, px2, py1, py2
+                return mask, thresh, px1, px2, py1, py2
 
         # PyTorch Segmentation
         elif args[0] == 10 and len(args)==6:
