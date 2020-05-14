@@ -19,6 +19,7 @@ def time_print(dateTimeObj):
     print(dateTimeObj.year, '/', dateTimeObj.month, '/', dateTimeObj.day)
     print(dateTimeObj.hour, ':', dateTimeObj.minute, ':', dateTimeObj.second, '.', dateTimeObj.microsecond)
 
+
 # Object definition of a test case
 class Case(object):
     def __init__(self, videoFile, frame, x1, x2, y1, y2):
@@ -88,31 +89,39 @@ def run(vid_name,FRAME_NO,bboxx1,bboxy1,bboxx2,bboxy2,folder_name,snap_type):
     
     # THE PARAMETERS TO CHANGE
     # Coordinates of the resized image, not the full size
-    vid.set(1, FRAME_NO)
+    vid.set(1, FRAME_NO-1)
     ret, img = vid.read()
     (H, W) = img.shape[:2]
     imgvis = imutils.resize(img, width=1028)
     ratioW = W/1028
 
     # Return bbox coordinates along with generated images
-    if snap_type == snap.SNAP_BACKGROUND_SUBTRACTION_KNN or snap_type == snap.SNAP_BACKGROUND_SUBTRACTION_CNT:
-        thresh, fgmask_crop, frame_crop, imgvis, box_xmin, box_xmax, box_ymin, box_ymax = snap.snap_algorithm(snap_type, vid, FRAME_NO, bboxx1*ratioW, bboxy1*ratioW, bboxx2*ratioW, bboxy2*ratioW)
-    elif snap_type == snap.SNAP_BACKGROUND_SUBTRACTION_CNT_NO_SHADOW or snap_type == snap.SNAP_BACKGROUND_SUBTRACTION_MOG2:
-        thresh, fgmask_crop, frame_crop, imgvis, box_xmin, box_xmax, box_ymin, box_ymax = snap.snap_algorithm(snap_type, vid, vid_name, FRAME_NO, bboxx1*ratioW, bboxy1*ratioW, bboxx2*ratioW, bboxy2*ratioW)
-    elif snap_type == snap.SNAP_GRABCUT:
-        thresh, grabcut_crop, display, box_xmin, box_xmax, box_ymin, box_ymax = snap.snap_algorithm(snap_type, img, bboxx1*ratioW, bboxy1*ratioW, bboxx2*ratioW, bboxy2*ratioW)
+    # if snap_type == snap.SNAP_BACKGROUND_SUBTRACTION_KNN or snap_type == snap.SNAP_BACKGROUND_SUBTRACTION_CNT:
+    #     thresh, fgmask_crop, frame_crop, imgvis, box_xmin, box_xmax, box_ymin, box_ymax = snap.snap_algorithm(snap_type, vid, FRAME_NO, bboxx1*ratioW, bboxy1*ratioW, bboxx2*ratioW, bboxy2*ratioW)
+    # elif snap_type == snap.SNAP_BACKGROUND_SUBTRACTION_CNT_NO_SHADOW or snap_type == snap.SNAP_BACKGROUND_SUBTRACTION_MOG2:
+    #     thresh, fgmask_crop, frame_crop, imgvis, box_xmin, box_xmax, box_ymin, box_ymax = snap.snap_algorithm(snap_type, vid, vid_name, FRAME_NO, bboxx1*ratioW, bboxy1*ratioW, bboxx2*ratioW, bboxy2*ratioW)
+    if snap_type == snap.GRABCUT or snap_type == snap.IMPROVED_GRABCUT:
+        mask, thresh, grabcut_crop, display, box_xmin, box_xmax, box_ymin, box_ymax = snap.snap_algorithm(snap_type, img, bboxx1*ratioW, bboxy1*ratioW, bboxx2*ratioW, bboxy2*ratioW)
+    elif snap_type == snap.PYTORCH_MODEL:
+        display, rgb, thresh, img, box_xmin, box_xmax, box_ymin, box_ymax = snap.snap_algorithm(snap_type, img, bboxx1*ratioW, bboxy1*ratioW, bboxx2*ratioW, bboxy2*ratioW)
 
-    imgvis = imutils.resize(imgvis, width = 1028)
-    if snap_type == snap.SNAP_BACKGROUND_SUBTRACTION_KNN or snap_type == snap.SNAP_BACKGROUND_SUBTRACTION_MOG2 or snap_type == snap.SNAP_BACKGROUND_SUBTRACTION_CNT or snap_type == snap.SNAP_BACKGROUND_SUBTRACTION_CNT_NO_SHADOW:
+    # Printing the visualizations and images
+    # if snap_type == snap.SNAP_BACKGROUND_SUBTRACTION_KNN or snap_type == snap.SNAP_BACKGROUND_SUBTRACTION_MOG2 or snap_type == snap.SNAP_BACKGROUND_SUBTRACTION_CNT or snap_type == snap.SNAP_BACKGROUND_SUBTRACTION_CNT_NO_SHADOW or snap_type == snap.SNAP_GRABCUT_WITH_CNT:
         # cv2.imwrite(folder_name+'/frame_'+str(frame_no)+'_bgimg.jpg', background)
-        cv2.imwrite(folder_name+'/frame_'+str(frame_no)+'_thresh.jpg', thresh)
-        cv2.imwrite(folder_name+'/frame_'+str(frame_no)+'_crop.jpg', frame_crop)
-        cv2.imwrite(folder_name+'/frame_'+str(frame_no)+'_fgmask_crop.jpg', fgmask_crop)
-        cv2.imwrite(folder_name+'/frame_'+str(FRAME_NO)+'.jpg',imgvis)
-    elif snap_type == snap.SNAP_GRABCUT:
-        cv2.imwrite(folder_name+'/frame_'+str(frame_no)+'_thresh_grabcut.jpg', thresh)
-        cv2.imwrite(folder_name+'/frame_'+str(frame_no)+'_crop_grabcut.jpg', grabcut_crop)
+        # cv2.imwrite(folder_name+'/frame_'+str(FRAME_NO)+'_thresh.jpg', thresh)
+        # cv2.imwrite(folder_name+'/frame_'+str(FRAME_NO)+'_crop.jpg', frame_crop)
+        # cv2.imwrite(folder_name+'/frame_'+str(FRAME_NO)+'_fgmask_crop.jpg', fgmask_crop)
+        # cv2.imwrite(folder_name+'/frame_'+str(FRAME_NO)+'.jpg',imgvis)
+    if snap_type == snap.GRABCUT or snap_type == snap.IMPROVED_GRABCUT:
+        cv2.imwrite(folder_name+'/frame_'+str(FRAME_NO)+'_mask_grabcut.jpg', mask)
+        cv2.imwrite(folder_name+'/frame_'+str(FRAME_NO)+'_thresh_grabcut.jpg', thresh)
+        cv2.imwrite(folder_name+'/frame_'+str(FRAME_NO)+'_crop_grabcut.jpg', grabcut_crop)
         cv2.imwrite(folder_name+'/frame_'+str(FRAME_NO)+'_grabcut.jpg',display)
+    elif snap_type == snap.PYTORCH_MODEL:
+        cv2.imwrite(folder_name+'/frame_'+str(FRAME_NO)+'_original.jpg',display)
+        cv2.imwrite(folder_name+'/frame_'+str(FRAME_NO)+'_rgb_pytorch.jpg', rgb)
+        cv2.imwrite(folder_name+'/frame_'+str(FRAME_NO)+'_thresh_pytorch.jpg', thresh)
+        cv2.imwrite(folder_name+'/frame_'+str(FRAME_NO)+'_img_pytorch.jpg', img)
 
     # Downsize generated bounding box coordinates
     box_xmin /= ratioW
@@ -129,7 +138,7 @@ ap.add_argument("-r", "--run_from_file", required=False, default=None, help="pro
 args = vars(ap.parse_args())
 
 snap = Snap()
-snap_type = snap.SNAP_BACKGROUND_SUBTRACTION_KNN  # Choose snap algorithm here
+snap_type = snap.PYTORCH_MODEL  # Choose snap algorithm here
 i = 1
 
 # Sets list of ground truth bounding boxes
@@ -194,6 +203,8 @@ for filename in args["run_from_file"]:
             classification = 'Good Snap'
         elif accuracy > accThreshClose:
             classification = 'Close Call'
+        elif accuracy == 0 and sizeError == -1:
+            classification = 'No detections'
         else:
             if sizeError > 0:
                 classification = 'Box too big'
@@ -202,7 +213,7 @@ for filename in args["run_from_file"]:
             
 
         # Records accuracy measure in a csv file
-        with open('accuracy.csv', 'a') as csvfile:
+        with open('accuracy_grab.csv', 'a') as csvfile:
             writer = csv.writer(csvfile)
             writer.writerow([filename,video[7:-4], frame_no, accuracy, sizeError, classification])
 
