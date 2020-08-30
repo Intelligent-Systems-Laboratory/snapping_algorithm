@@ -5,6 +5,7 @@ import imutils
 from PIL import Image 
 from tools.snap_grabcut import *
 from tools.snap_pytorch import *
+from tools.torchcut.torchcut import *
 
 class Snap:
 
@@ -12,6 +13,7 @@ class Snap:
         self.GRABCUT = 4
         self.IMPROVED_GRABCUT = 8
         self.PYTORCH_MODEL = 10
+        self.TORCHCUT = 12
 
     def snap_algorithm(self, *args):
 
@@ -118,6 +120,33 @@ class Snap:
                 px2 = int(nX + w + x1)
                 py2 = int(nY + h + y1)
                 return display, out, gray_crop, img_crop, px1, px2, py1, py2
+        # Torchcut Algorithm
+        elif args[0] == 12 and len(args)==6:
+            if(isinstance(args[1], np.ndarray)):
+                img = args[1]
+            else:
+                print("First argument should be an image path")
+                return ValueError
+            if isinstance(args[2], (float, int)) and isinstance(args[3], (float, int)) and isinstance(args[4], (float, int)) and isinstance(args[5], (float, int)):
+                x1 = int(args[2])
+                y1 = int(args[3])
+                x2 = int(args[4])
+                y2 = int(args[5])
+            else:
+                print("Argument 3 to 6 should be int or float")
+                return ValueError
+            
+            display = img.copy()
+            img_crop = img[int(y1):int(y2), int(x1):int(x2)]
+            (H, W) = display.shape[:2]
+            #img = Image.fromarray(img, 'RGB')
+
+            [px1,py1,px2,py2,conf,typ] = snap_torchcut(img_crop)
+            px1 += x1
+            px2 += x1
+            py1 += y1
+            py2 += y1
+            return display, px1, px2, py1, py2
 
         else:
             print("Proper usage of the snap.py: snap_algorithm(flag, img, px1, py1, px2, py2)")
