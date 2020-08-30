@@ -38,7 +38,8 @@ def segment(img):
             T.Normalize(mean = [0.485, 0.456, 0.406], 
                     std = [0.229, 0.224, 0.225])])
     inp = trf(img).unsqueeze(0).to('cuda')
-    out = fcn.to('cuda')(inp)['out']
+    with torch.no_grad():
+        out = fcn.to('cuda')(inp)['out']
 
     om = torch.argmax(out.squeeze(), dim=0).detach().cpu().numpy()
     rgb = decode_segmap(om)
