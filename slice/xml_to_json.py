@@ -53,12 +53,12 @@ if os.path.exists(path_out_train) != True:
   os.mkdir(path_out_train) 
 if os.path.exists(path_out_valid) != True:
   os.mkdir(path_out_valid) 
-path_out_txt = 'slice/sliced/annotations'
-if os.path.exists(path_out_txt) != True:
-  os.mkdir(path_out_txt)
-path_out_json = 'slice'
+path_out_json = 'slice/sliced/annotations'
+if os.path.exists(path_out_json) != True:
+  os.mkdir(path_out_json)
+
 boxes = []
-step = 1000
+step = 30
 #----define ROI for cropping----
 #imgvis = cv2.imread(os.path.join(path_image,'frame_000000.jpg'))
 #(height,width) = imgvis.shape[:2]
@@ -67,7 +67,7 @@ step = 1000
 #print(rect)
 rect = (201, 184, 1522, 698)
 #----create labels for outputted crops----
-j= 0  #iterator for step
+k= 0  #iterator for step
 folder_num = 0 #iterator for frame and xml folder
 xml_list =os.listdir(path_xml)
 for xml in range(int(len(xml_list))):        #iterate through all xml files in xml path
@@ -84,12 +84,12 @@ for xml in range(int(len(xml_list))):        #iterate through all xml files in x
       for atrib in box_atrib:
         if atrib.attrib['name'] == 'type':
           if atrib.text != 'ignore':
-            x =float(((float(box.get('xbr'))+float(box.get('xtl')))/(2*float(image.attrib['width']))))
-            y =float((float(box.get('ybr'))+float(box.get('ytl')))/(2*float(image.attrib['height'])))
-            w =float((float(box.get('xbr'))-float(box.get('xtl')))/float(image.attrib['width']))
-            h =float((float(box.get('ybr'))-float(box.get('ytl')))/float(image.attrib['height']))
+            x =float(box.get('xtl'))
+            y =float(box.get('ytl'))
+            w =float(box.get('xbr'))-float(box.get('xtl'))
+            h =float(box.get('ybr'))-float(box.get('ytl'))
             box_type = atrib.text
-            if int((x-w/2)*W)>rect[0] and int((x+w/2)*W)<rect[2] and int((y-h/2)*H)>rect[1] and int((y+h/2)*H)<rect[3]and j%step==0:
+            if k%step==0:
               box_list.append(image.attrib['name'])
               box_list.append(classToNum(box_type))
               box_list.append(x)
@@ -100,17 +100,17 @@ for xml in range(int(len(xml_list))):        #iterate through all xml files in x
               boxes.append(box_list)
               print(box_list[0])
               
-    j=j+1          
+    k+=1          
   folder_num+=1    
 print(len(boxes))
-boxes_valid=random.sample(boxes, int(max(20,len(boxes)*0.01)))
+boxes_valid=random.sample(boxes, int(max(20,len(boxes)*0.1)))
 for box in boxes_valid:
   boxes.remove(box)
 print('done')
 print(len(boxes))
 print(len(boxes_valid))
 
-i=0
+j=0
 images = []
 annotations = []
 #create train image and annotations list of dicts
@@ -121,34 +121,50 @@ for box_i in range(len(boxes)):
   y_max = H
   x_min = 0
   y_min = 0
-  x=int(boxes[box_i][2]*W)
-  y=int(boxes[box_i][3]*H)
-  w=int(boxes[box_i][4]*W)
-  h=int(boxes[box_i][5]*H)
+  x=int(boxes[box_i][2])
+  y=int(boxes[box_i][3])
+  w=int(boxes[box_i][4])
+  h=int(boxes[box_i][5])
   pad_h = int(0.3*w)
   pad_w = int(0.3*h)
   #if box_i%step == 0:
-  for index in range(1,4):
+  for index in range(1,2):
     #write cropped image
-    filename = str(i).zfill(6)
-    img_crop = np.array(img[max(y_min,int(y-(h+pad_h*index)/2)):min(y_max,int(y+(h+pad_h*index)/2)), max(int(x-(w+pad_w*index)/2),x_min):min(x_max,int(x+(w+pad_w*index)/2))],dtype = np.uint8).copy()
+    filename = str(j).zfill(6)
+    img_crop = np.array(img[max(y_min,int(y-(pad_h*index)/2)):min(y_max,int(y+(pad_h*index)/2)), max(int(x-(pad_w*index)/2),x_min):min(x_max,int(x+(pad_w*index)/2))],dtype = np.uint8).copy()
     cv2.imwrite(os.path.join(path_out_train,filename+'.jpg'), img_crop)
     #update list of dict
-    annotations.append({"id":i,"image_id":i,"category_id":(boxes[box_i][1]+1),"is_crowd":0,"area":(img_crop.shape[0]*boxes[box_i][4]*img_crop.shape[0]*boxes[box_i][5]),"bbox":[img_crop.shape[0]*boxes[box_i][2],img_crop.shape[1]*boxes[box_i][3],img_crop.shape[0]*boxes[box_i][4],img_crop.shape[1]*boxes[box_i][5]],"segmentation":[]})
-    images.append({"id":i,"file_name":f"{i}.jpg","width":img_crop.shape[0],"height":img_crop.shape[1],"date_captured":str(date.today()),"license":1,"coco_url":"","fickr_url":""})
+    annotations.append({"id":j,"image_id":j,"category_id":(boxes[box_i][1]+1),"iscrowd":0,"area":(boxes[box_i][4]*boxes[box_i][5]),"bbox":[boxes[box_i][2],boxes[box_i][3],boxes[box_i][4],boxes[box_i][5]],
+    "segmentation":[[boxes[box_i][2],
+    boxes[box_i][3],
+    boxes[box_i][2]+boxes[box_i][4],
+    boxes[box_i][3],
+    boxes[box_i][2]+boxes[box_i][4],
+    boxes[box_i][3]+boxes[box_i][5],
+    boxes[box_i][2],
+    boxes[box_i][3]+boxes[box_i][5]]]})
+    images.append({"id":j,"file_name":filename+".jpg","width":img_crop.shape[0],"height":img_crop.shape[1],"date_captured":str(date.today()),"license":1,"coco_url":"","fickr_url":""})
     #update image counter
-    i+=1
+    j+=1
     #write flipped image
-    filename = str(i).zfill(6)
+    filename = str(j).zfill(6)
     cv2.imwrite(os.path.join(path_out_train,filename+'.jpg'), np.fliplr(img_crop))
     # save text here
-    annotations.append({"id":i,"image_id":i,"category_id":boxes[box_i][1]+1,"is_crowd":0,"area":img_crop.shape[0]*boxes[box_i][4]*img_crop.shape[0]*boxes[box_i][5],"bbox":[img_crop.shape[0]*boxes[box_i][2],img_crop.shape[1]*boxes[box_i][3],img_crop.shape[0]*boxes[box_i][4],img_crop.shape[1]*boxes[box_i][5]],"segmentation":[]})
-    images.append({"id":i,"file_name":f"{i}.jpg","width":img_crop.shape[0],"height":img_crop.shape[1],"date_captured":str(date.today()),"license":1,"coco_url":"","fickr_url":""})
+    annotations.append({"id":j,"image_id":j,"category_id":boxes[box_i][1]+1,"iscrowd":0,"area":boxes[box_i][4]*boxes[box_i][5],"bbox":[boxes[box_i][2],boxes[box_i][3],boxes[box_i][4],boxes[box_i][5]],
+    "segmentation":[[boxes[box_i][2],
+    boxes[box_i][3],
+    boxes[box_i][2]+boxes[box_i][4],
+    boxes[box_i][3],
+    boxes[box_i][2]+boxes[box_i][4],
+    boxes[box_i][3]+boxes[box_i][5],
+    boxes[box_i][2],
+    boxes[box_i][3]+boxes[box_i][5]]]})
+    images.append({"id":j,"file_name":filename+".jpg","width":img_crop.shape[0],"height":img_crop.shape[1],"date_captured":str(date.today()),"license":1,"coco_url":"","fickr_url":""})
     
-    print(str(i) + ' ' + str(boxes[box_i][6]) + ' ' + str(boxes[box_i][0]))
+    print(str(j) + ' ' + str(boxes[box_i][6]) + ' ' + str(boxes[box_i][0]))
 
     #update image counter
-    i+=1
+    j+=1
   #cv2.rectangle(img, (int(x-w/2),int(y-h/2)), (int(x+w/2),int(y+h/2)), (0xFF, 0xFF, 0), 4)
   #cv2.imshow(boxes[box_i][0],img)
   #cv2.rectangle(img_crop, ((int((w+pad_w)/2)-int(w/2)),(int((h+pad_h)/2)-int(h/2))), ((int((w+pad_w)/2)+int(w/2)),(int((h+pad_h)/2)+int(h/2))), (0xFF, 0xFF, 0), 4)
@@ -170,29 +186,45 @@ for box_i in range(len(boxes_valid)):
   y_max = H
   x_min = 0
   y_min = 0
-  x=int(boxes_valid[box_i][2]*W)
-  y=int(boxes_valid[box_i][3]*H)
-  w=int(boxes_valid[box_i][4]*W)
-  h=int(boxes_valid[box_i][5]*H)
+  x=int(boxes_valid[box_i][2])
+  y=int(boxes_valid[box_i][3])
+  w=int(boxes_valid[box_i][4])
+  h=int(boxes_valid[box_i][5])
   pad_h = int(0.3*w)
   pad_w = int(0.3*h)
   #if box_i%step == 0:
   for index in range(1,4):
     #write cropped image
     filename = str(i).zfill(6)
-    img_crop = np.array(img[max(y_min,int(y-(h+pad_h*index)/2)):min(y_max,int(y+(h+pad_h*index)/2)), max(int(x-(w+pad_w*index)/2),x_min):min(x_max,int(x+(w+pad_w*index)/2))],dtype = np.uint8).copy()
+    img_crop = np.array(img[max(y_min,int(y-(pad_h*index)/2)):min(y_max,int(y+(pad_h*index)/2)), max(int(x-(pad_w*index)/2),x_min):min(x_max,int(x+(pad_w*index)/2))],dtype = np.uint8).copy()
     cv2.imwrite(os.path.join(path_out_valid,filename+'.jpg'), img_crop)
     #update list of dict
-    annotations.append({"id":i,"image_id":i,"category_id":(boxes_valid[box_i][1]+1),"is_crowd":0,"area":(img_crop.shape[0]*boxes_valid[box_i][4]*img_crop.shape[0]*boxes_valid[box_i][5]),"bbox":[img_crop.shape[0]*boxes_valid[box_i][2],img_crop.shape[1]*boxes_valid[box_i][3],img_crop.shape[0]*boxes_valid[box_i][4],img_crop.shape[1]*boxes_valid[box_i][5]],"segmentation":[]})
-    images.append({"id":i,"file_name":f"{i}.jpg","width":img_crop.shape[0],"height":img_crop.shape[1],"date_captured":str(date.today()),"license":1,"coco_url":"","fickr_url":""})
+    annotations_valid.append({"id":i,"image_id":i,"category_id":(boxes_valid[box_i][1]+1),"iscrowd":0,"area":(boxes_valid[box_i][4]*boxes_valid[box_i][5]),"bbox":[boxes_valid[box_i][2],boxes_valid[box_i][3],boxes_valid[box_i][4],boxes_valid[box_i][5]],
+    "segmentation":[[boxes_valid[box_i][2],
+    boxes_valid[box_i][3],
+    boxes_valid[box_i][2]+boxes_valid[box_i][4],
+    boxes_valid[box_i][3],
+    boxes_valid[box_i][2]+boxes_valid[box_i][4],
+    boxes_valid[box_i][3]+boxes_valid[box_i][5],
+    boxes_valid[box_i][2],
+    boxes_valid[box_i][3]+boxes_valid[box_i][5]]]})
+    images_valid.append({"id":i,"file_name":filename + ".jpg","width":img_crop.shape[0],"height":img_crop.shape[1],"date_captured":str(date.today()),"license":1,"coco_url":"","fickr_url":""})
     #update image counter
     i+=1
     #write flipped image
     filename = str(i).zfill(6)
     cv2.imwrite(os.path.join(path_out_valid,filename+'.jpg'), np.fliplr(img_crop))
     # save text here
-    annotations_valid.append({"id":i,"image_id":i,"category_id":boxes_valid[box_i][1]+1,"is_crowd":0,"area":img_crop.shape[0]*boxes_valid[box_i][4]*img_crop.shape[0]*boxes_valid[box_i][5],"bbox":[img_crop.shape[0]*boxes_valid[box_i][2],img_crop.shape[1]*boxes_valid[box_i][3],img_crop.shape[0]*boxes_valid[box_i][4],img_crop.shape[1]*boxes_valid[box_i][5]],"segmentation":[]})
-    images_valid.append({"id":i,"file_name":f"{i}.jpg","width":img_crop.shape[0],"height":img_crop.shape[1],"date_captured":str(date.today()),"license":1,"coco_url":"","fickr_url":""})
+    annotations_valid.append({"id":i,"image_id":i,"category_id":boxes_valid[box_i][1]+1,"iscrowd":0,"area":boxes_valid[box_i][4]*boxes_valid[box_i][5],"bbox":[boxes_valid[box_i][2],boxes_valid[box_i][3],boxes_valid[box_i][4],boxes_valid[box_i][5]],
+    "segmentation":[[boxes_valid[box_i][2],
+    boxes_valid[box_i][3],
+    boxes_valid[box_i][2]+boxes_valid[box_i][4],
+    boxes_valid[box_i][3],
+    boxes_valid[box_i][2]+boxes_valid[box_i][4],
+    boxes_valid[box_i][3]+boxes_valid[box_i][5],
+    boxes_valid[box_i][2],
+    boxes_valid[box_i][3]+img_crop.shape[1]*boxes_valid[box_i][5]]]})
+    images_valid.append({"id":i,"file_name":filename+".jpg","width":img_crop.shape[0],"height":img_crop.shape[1],"date_captured":str(date.today()),"license":1,"coco_url":"","fickr_url":""})
     
     print(str(i) + ' ' + str(boxes_valid[box_i][6]) + ' ' + str(boxes_valid[box_i][0]))
 
@@ -210,7 +242,7 @@ for box_i in range(len(boxes_valid)):
   #cv2.destroyAllWindows()
 print('hello baby')
 #create valid json
-filename_valid = 'json_output_valid'
+filename_valid = 'instances_valid'
 json_out = {'info':{'description':"",'url':"",'version':"",'year':int(date.today().year)},
 'licenses':[{'id':1,'name':"",'url':""}],
 'categories':[{'id':1,'name':"car",'supercategory':"None"},
@@ -225,7 +257,7 @@ print('finished')
 with open(os.path.join(path_out_json,filename_valid+'.txt'),'w') as outfile:
   json.dump(json_out,outfile)
 #create train json
-filename_train = 'json_output_train'
+filename_train = 'instances_train'
 
 json_out = {'info':{'description':"",'url':"",'version':"",'year':int(date.today().year)},
 'licenses':[{'id':1,'name':"",'url':""}],
@@ -240,5 +272,5 @@ json_out = {'info':{'description':"",'url':"",'version':"",'year':int(date.today
 print('finished')
 with open(os.path.join(path_out_json,filename_train+'.txt'),'w') as outfile:
   json.dump(json_out,outfile)
-os.rename('slice/json_output_train.txt','slice/json_output_train.json')
-os.rename('slice/json_output_valid.txt','slice/json_output_valid.json')
+os.rename(os.path.join(path_out_json,filename_train+'.txt'),os.path.join(path_out_json,filename_train+'.json'))
+os.rename(os.path.join(path_out_json,filename_valid+'.txt'),os.path.join(path_out_json,filename_valid+'.json'))
