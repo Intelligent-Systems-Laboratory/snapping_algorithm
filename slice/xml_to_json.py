@@ -1,3 +1,4 @@
+
 import numpy as np
 import cv2
 import os
@@ -60,12 +61,12 @@ if os.path.exists(path_out_json) != True:
 boxes = []
 step = 30
 #----define ROI for cropping----
-#imgvis = cv2.imread(os.path.join(path_image,'frame_000000.jpg'))
-#(height,width) = imgvis.shape[:2]
-#rect = cv2.selectROI('Select Area',imgvis,True)
-#cv2.destroyWindow('Select Area')
-#print(rect)
-rect = (201, 184, 1522, 698)
+imgvis = cv2.imread(os.path.join(path_image,'frame_000000.jpg'))
+(height,width) = imgvis.shape[:2]
+rect = cv2.selectROI('Select Area',imgvis,True)
+cv2.destroyWindow('Select Area')
+print(rect)
+#rect = (201, 184, 1522, 698)
 #----create labels for outputted crops----
 k= 0  #iterator for step
 folder_num = 0 #iterator for frame and xml folder
@@ -89,7 +90,7 @@ for xml in range(int(len(xml_list))):        #iterate through all xml files in x
             w =float(box.get('xbr'))-float(box.get('xtl'))
             h =float(box.get('ybr'))-float(box.get('ytl'))
             box_type = atrib.text
-            if k%step==0:
+            if int((x))>rect[0] and int((x+w))<rect[2] and int((y))>rect[1] and int((y+h))<rect[3] and k%step==0:
               box_list.append(image.attrib['name'])
               box_list.append(classToNum(box_type))
               box_list.append(x)
@@ -131,18 +132,18 @@ for box_i in range(len(boxes)):
   for index in range(1,2):
     #write cropped image
     filename = str(j).zfill(6)
-    img_crop = np.array(img[max(y_min,int(y-(pad_h*index)/2)):min(y_max,int(y+(pad_h*index)/2)), max(int(x-(pad_w*index)/2),x_min):min(x_max,int(x+(pad_w*index)/2))],dtype = np.uint8).copy()
+    img_crop = np.array(img[max(y_min,int(y-(pad_h*index)/2)):min(y_max,int(y+h+(pad_h*index)/2)), max(int(x-(pad_w*index)/2),x_min):min(x_max,int(x+w+(pad_w*index)/2))],dtype = np.uint8).copy()
     cv2.imwrite(os.path.join(path_out_train,filename+'.jpg'), img_crop)
     #update list of dict
-    annotations.append({"id":j,"image_id":j,"category_id":(boxes[box_i][1]+1),"iscrowd":0,"area":(boxes[box_i][4]*boxes[box_i][5]),"bbox":[boxes[box_i][2],boxes[box_i][3],boxes[box_i][4],boxes[box_i][5]],
-    "segmentation":[[boxes[box_i][2],
-    boxes[box_i][3],
-    boxes[box_i][2]+boxes[box_i][4],
-    boxes[box_i][3],
-    boxes[box_i][2]+boxes[box_i][4],
-    boxes[box_i][3]+boxes[box_i][5],
-    boxes[box_i][2],
-    boxes[box_i][3]+boxes[box_i][5]]]})
+    annotations.append({"id":j,"image_id":j,"category_id":(boxes[box_i][1]+1),"iscrowd":0,"area":(w*h),"bbox":[pad_w,pad_h,w,h],
+    "segmentation":[[pad_w,
+    pad_h,
+    pad_w+w,
+    pad_h,
+    pad_w+w,
+    pad_h+h,
+    pad_w,
+    pad_h+h]]})
     images.append({"id":j,"file_name":filename+".jpg","width":img_crop.shape[0],"height":img_crop.shape[1],"date_captured":str(date.today()),"license":1,"coco_url":"","fickr_url":""})
     #update image counter
     j+=1
@@ -150,15 +151,15 @@ for box_i in range(len(boxes)):
     filename = str(j).zfill(6)
     cv2.imwrite(os.path.join(path_out_train,filename+'.jpg'), np.fliplr(img_crop))
     # save text here
-    annotations.append({"id":j,"image_id":j,"category_id":boxes[box_i][1]+1,"iscrowd":0,"area":boxes[box_i][4]*boxes[box_i][5],"bbox":[boxes[box_i][2],boxes[box_i][3],boxes[box_i][4],boxes[box_i][5]],
-    "segmentation":[[boxes[box_i][2],
-    boxes[box_i][3],
-    boxes[box_i][2]+boxes[box_i][4],
-    boxes[box_i][3],
-    boxes[box_i][2]+boxes[box_i][4],
-    boxes[box_i][3]+boxes[box_i][5],
-    boxes[box_i][2],
-    boxes[box_i][3]+boxes[box_i][5]]]})
+    annotations.append({"id":j,"image_id":j,"category_id":boxes[box_i][1]+1,"iscrowd":0,"area":w*h,"bbox":[pad_w,pad_h,w,h],
+    "segmentation":[[pad_w,
+    pad_h,
+    pad_w+w,
+    pad_h,
+    pad_w+w,
+    pad_h+h,
+    pad_w,
+    pad_h+h]]})
     images.append({"id":j,"file_name":filename+".jpg","width":img_crop.shape[0],"height":img_crop.shape[1],"date_captured":str(date.today()),"license":1,"coco_url":"","fickr_url":""})
     
     print(str(j) + ' ' + str(boxes[box_i][6]) + ' ' + str(boxes[box_i][0]))
@@ -196,18 +197,18 @@ for box_i in range(len(boxes_valid)):
   for index in range(1,4):
     #write cropped image
     filename = str(i).zfill(6)
-    img_crop = np.array(img[max(y_min,int(y-(pad_h*index)/2)):min(y_max,int(y+(pad_h*index)/2)), max(int(x-(pad_w*index)/2),x_min):min(x_max,int(x+(pad_w*index)/2))],dtype = np.uint8).copy()
+    img_crop = np.array(img[max(y_min,int(y-(pad_h*index)/2)):min(y_max,int(y+h+(pad_h*index)/2)), max(int(x-(pad_w*index)/2),x_min):min(x_max,int(x+w+(pad_w*index)/2))],dtype = np.uint8).copy()
     cv2.imwrite(os.path.join(path_out_valid,filename+'.jpg'), img_crop)
     #update list of dict
-    annotations_valid.append({"id":i,"image_id":i,"category_id":(boxes_valid[box_i][1]+1),"iscrowd":0,"area":(boxes_valid[box_i][4]*boxes_valid[box_i][5]),"bbox":[boxes_valid[box_i][2],boxes_valid[box_i][3],boxes_valid[box_i][4],boxes_valid[box_i][5]],
-    "segmentation":[[boxes_valid[box_i][2],
-    boxes_valid[box_i][3],
-    boxes_valid[box_i][2]+boxes_valid[box_i][4],
-    boxes_valid[box_i][3],
-    boxes_valid[box_i][2]+boxes_valid[box_i][4],
-    boxes_valid[box_i][3]+boxes_valid[box_i][5],
-    boxes_valid[box_i][2],
-    boxes_valid[box_i][3]+boxes_valid[box_i][5]]]})
+    annotations_valid.append({"id":i,"image_id":i,"category_id":(boxes_valid[box_i][1]+1),"iscrowd":0,"area":(w*h),"bbox":[pad_w,pad_h,w,h],
+    "segmentation":[[pad_w,
+    pad_h,
+    pad_w+w,
+    pad_h,
+    pad_w+w,
+    pad_h+h,
+    pad_w,
+    pad_h+h]]})
     images_valid.append({"id":i,"file_name":filename + ".jpg","width":img_crop.shape[0],"height":img_crop.shape[1],"date_captured":str(date.today()),"license":1,"coco_url":"","fickr_url":""})
     #update image counter
     i+=1
@@ -215,15 +216,15 @@ for box_i in range(len(boxes_valid)):
     filename = str(i).zfill(6)
     cv2.imwrite(os.path.join(path_out_valid,filename+'.jpg'), np.fliplr(img_crop))
     # save text here
-    annotations_valid.append({"id":i,"image_id":i,"category_id":boxes_valid[box_i][1]+1,"iscrowd":0,"area":boxes_valid[box_i][4]*boxes_valid[box_i][5],"bbox":[boxes_valid[box_i][2],boxes_valid[box_i][3],boxes_valid[box_i][4],boxes_valid[box_i][5]],
-    "segmentation":[[boxes_valid[box_i][2],
-    boxes_valid[box_i][3],
-    boxes_valid[box_i][2]+boxes_valid[box_i][4],
-    boxes_valid[box_i][3],
-    boxes_valid[box_i][2]+boxes_valid[box_i][4],
-    boxes_valid[box_i][3]+boxes_valid[box_i][5],
-    boxes_valid[box_i][2],
-    boxes_valid[box_i][3]+img_crop.shape[1]*boxes_valid[box_i][5]]]})
+    annotations_valid.append({"id":i,"image_id":i,"category_id":boxes_valid[box_i][1]+1,"iscrowd":0,"area":w*h,"bbox":[pad_w,pad_h,w,h],
+    "segmentation":[[pad_w,
+    pad_h,
+    pad_w+w,
+    pad_h,
+    pad_w+w,
+    pad_h+h,
+    pad_w,
+    pad_h+h]]})
     images_valid.append({"id":i,"file_name":filename+".jpg","width":img_crop.shape[0],"height":img_crop.shape[1],"date_captured":str(date.today()),"license":1,"coco_url":"","fickr_url":""})
     
     print(str(i) + ' ' + str(boxes_valid[box_i][6]) + ' ' + str(boxes_valid[box_i][0]))
